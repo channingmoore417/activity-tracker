@@ -1,32 +1,42 @@
 import Link from "next/link";
 import {
-  Activity,
+  AlertCircle,
   CalendarDays,
   CalendarRange,
+  CheckCircle2,
   LayoutDashboard,
   Plus,
+  Save,
   Search,
   Settings,
   Sparkles,
   Target,
+  TrendingUp,
   User,
 } from "lucide-react";
-import {
-  activityEntries,
-  metricDefinitions,
-  monthlySummaryCards,
-} from "@/lib/tracker-data";
+import { createActivityEntry, updateTrackerSettings } from "@/lib/db/tracker-actions";
+import { metricCatalog } from "@/lib/tracker-data";
+import type {
+  ActivityPageData,
+  DashboardData,
+  ProgressPageData,
+  SettingsPageData,
+  TrackerActivityEntry,
+  TrackerFlash,
+  TrackerMetric,
+  TrackerProfile,
+} from "@/lib/db/tracker";
 import styles from "./tracker-shell.module.css";
 
-type View = "dashboard" | "activity" | "progress" | "settings";
-
-type TrackerShellProps = {
-  view: View;
-};
+type TrackerShellProps =
+  | { view: "dashboard"; data: DashboardData; flash?: TrackerFlash }
+  | { view: "activity"; data: ActivityPageData; flash?: TrackerFlash }
+  | { view: "progress"; data: ProgressPageData; flash?: TrackerFlash }
+  | { view: "settings"; data: SettingsPageData; flash?: TrackerFlash };
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", view: "dashboard", icon: LayoutDashboard },
-  { href: "/activity", label: "Activity Log", view: "activity", icon: Activity },
+  { href: "/activity", label: "Activity Log", view: "activity", icon: TrendingUp },
   { href: "/progress", label: "Progress", view: "progress", icon: CalendarRange },
   { href: "/settings", label: "Settings", view: "settings", icon: Settings },
 ] as const;
@@ -34,20 +44,13 @@ const navItems = [
 function Ring({ value, goal, color }: { value: number; goal: number; color: string }) {
   const radius = 26;
   const circumference = 2 * Math.PI * radius;
-  const progress = Math.min(value / goal, 1);
+  const progress = goal > 0 ? Math.min(value / goal, 1) : 0;
   const dashoffset = circumference * (1 - progress);
 
   return (
     <div className={styles.ringWrap}>
       <svg height="64" width="64">
-        <circle
-          cx="32"
-          cy="32"
-          fill="none"
-          r={radius}
-          stroke="#d3e4ef"
-          strokeWidth="7"
-        />
+        <circle cx="32" cy="32" fill="none" r={radius} stroke="#d3e4ef" strokeWidth="7" />
         <circle
           cx="32"
           cy="32"
@@ -66,10 +69,19 @@ function Ring({ value, goal, color }: { value: number; goal: number; color: stri
   );
 }
 
-function DashboardView() {
-  const total = metricDefinitions.reduce((sum, metric) => sum + metric.current, 0);
-  const goal = metricDefinitions.reduce((sum, metric) => sum + metric.dailyGoal, 0);
+function FlashMessage({ flash }: { flash?: TrackerFlash }) {
+  if (!flash) return null;
+  const Icon = flash.status === "success" ? CheckCircle2 : AlertCircle;
 
+  return (
+    <div className={flash.status === "success" ? styles.flashSuccess : styles.flashError}>
+      <Icon size={16} />
+      {flash.message}
+    </div>
+  );
+}
+
+function DashboardView({ data }: { data: DashboardData }) {
   return (
     <div className={styles.dashboardGrid}>
       <section className={styles.panel}>
@@ -86,27 +98,30 @@ function DashboardView() {
             Today&apos;s Activity
           </div>
           <div className={styles.summaryTotal}>
-            Total: <span>{total}</span>
+            Total: <span>{data.totalToday}</span>
           </div>
         </div>
         <div className={styles.barWrap}>
           <div className={styles.barTrack}>
             <div
               className={styles.barFill}
-              style={{ width: `${Math.min((total / goal) * 100, 100)}%` }}
+              style={{
+                width: `${Math.min((data.totalToday / Math.max(data.totalDailyGoal, 1)) * 100, 100)}%`,
+              }}
             />
           </div>
         </div>
         <ul className={styles.metricList}>
-          {metricDefinitions.map((metric) => {
+          {data.metrics.map((metric) => {
             const Icon = metric.icon;
+
             return (
               <li key={metric.key} className={styles.metricRow}>
                 <div className={styles.metricIcon}>
                   <Icon size={13} />
                 </div>
                 <div className={styles.metricName}>{metric.key}</div>
-                <div className={styles.metricCount}>{metric.current}</div>
+                <div className={styles.metricCount}>{metric.todayCount}</div>
                 <div className={styles.metricGoal}>/ {metric.dailyGoal}</div>
               </li>
             );
@@ -123,12 +138,12 @@ function DashboardView() {
           <div className={styles.panelBadge}>vs Goal</div>
         </div>
         <div className={styles.ringsGrid}>
-          {metricDefinitions.map((metric) => (
+          {data.metrics.map((metric) => (
             <div key={metric.key} className={styles.ringCard}>
-              <Ring color={metric.color} goal={metric.dailyGoal} value={metric.current} />
+              <Ring color={metric.color} goal={metric.dailyGoal} value={metric.todayCount} />
               <div className={styles.ringName}>{metric.key}</div>
               <div className={styles.ringSub}>
-                {metric.current} / {metric.dailyGoal}
+                {metric.todayCount} / {metric.dailyGoal}
               </div>
             </div>
           ))}
@@ -138,72 +153,130 @@ function DashboardView() {
   );
 }
 
-function ActivityView() {
+function ActivityEntryForm() {
   return (
-    <>
-      <div className={styles.pageHeader}>
-        <div>
-          <div className={styles.pageTitle}>Activity Log</div>
-          <div className={styles.pageMeta}>Today&apos;s logged activity</div>
-        </div>
-        <button className={styles.actionButton} type="button">
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div className={styles.panelTitle}>
           <Plus size={16} />
           Record Activity
-        </button>
-      </div>
-
-      <div className={styles.statsStrip}>
-        {metricDefinitions.slice(0, 4).map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <div key={metric.key} className={styles.statPill}>
-              <div className={styles.statPillIcon}>
-                <Icon size={13} />
-              </div>
-              <div>
-                <div className={styles.statNum}>{metric.current}</div>
-                <div className={styles.statLabel}>{metric.key}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className={styles.filterBar}>
-        <div className={styles.searchWrap}>
-          <Search className={styles.searchIcon} size={14} />
-          <input className={styles.searchInput} placeholder="Search by name..." />
         </div>
-        <select className={styles.select} defaultValue="">
-          <option value="">All Metrics</option>
-          {metricDefinitions.map((metric) => (
-            <option key={metric.key} value={metric.key}>
-              {metric.key}
-            </option>
-          ))}
-        </select>
-        <select className={styles.select} defaultValue="">
-          <option value="">All Types</option>
-          <option value="Outbound">Outbound</option>
-          <option value="Referral">Referral</option>
-          <option value="Warm Lead">Warm Lead</option>
-        </select>
+        <div className={styles.panelBadge}>Supabase</div>
       </div>
+      <form action={createActivityEntry} className={styles.activityForm}>
+        <div className={styles.formGrid}>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor="metric">
+              Metric
+            </label>
+            <select className={styles.formInput} defaultValue="calls" id="metric" name="metric">
+              {metricCatalog.map((metric) => (
+                <option key={metric.key} value={metric.key}>
+                  {metric.key}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor="contact_name">
+              Contact Name
+            </label>
+            <input
+              className={styles.formInput}
+              id="contact_name"
+              name="contact_name"
+              placeholder="Angela Morris"
+              required
+            />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor="activity_type">
+              Type
+            </label>
+            <input
+              className={styles.formInput}
+              id="activity_type"
+              name="activity_type"
+              placeholder="Outbound"
+              required
+            />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor="count">
+              Count
+            </label>
+            <input
+              className={styles.formInput}
+              defaultValue="1"
+              id="count"
+              max="500"
+              min="1"
+              name="count"
+              required
+              type="number"
+            />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor="activity_date">
+              Activity Date
+            </label>
+            <input
+              className={styles.formInput}
+              defaultValue={new Date().toISOString().slice(0, 10)}
+              id="activity_date"
+              name="activity_date"
+              required
+              type="date"
+            />
+          </div>
+          <div className={styles.formFieldFull}>
+            <label className={styles.formLabel} htmlFor="notes">
+              Notes
+            </label>
+            <textarea
+              className={styles.formTextarea}
+              id="notes"
+              name="notes"
+              placeholder="Optional notes about the activity"
+              rows={3}
+            />
+          </div>
+        </div>
+        <div className={styles.formActions}>
+          <button className={styles.actionButton} type="submit">
+            <Save size={16} />
+            Save Activity
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
+function ActivityTable({ entries }: { entries: TrackerActivityEntry[] }) {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Count</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.length === 0 ? (
             <tr>
-              <th>Metric</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Count</th>
-              <th>Time</th>
+              <td className={styles.emptyRow} colSpan={6}>
+                No activity entries match the current filters yet.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {activityEntries.map((entry) => {
-              const metric = metricDefinitions.find((item) => item.key === entry.metric)!;
+          ) : (
+            entries.map((entry) => {
+              const metric = metricCatalog.find((item) => item.key === entry.metric)!;
               const Icon = metric.icon;
 
               return (
@@ -221,34 +294,150 @@ function ActivityView() {
                     <span className={styles.chip}>{entry.type}</span>
                   </td>
                   <td>{entry.count}</td>
+                  <td>{entry.date}</td>
                   <td>{entry.time}</td>
                 </tr>
               );
-            })}
-          </tbody>
-        </table>
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ActivityView({ data }: { data: ActivityPageData }) {
+  return (
+    <>
+      <div className={styles.pageHeader}>
+        <div>
+          <div className={styles.pageTitle}>Activity Log</div>
+          <div className={styles.pageMeta}>Your real activity entries from Supabase</div>
+        </div>
+        <Link className={styles.actionButton} href="#activity-form">
+          <Plus size={16} />
+          Record Activity
+        </Link>
       </div>
+
+      <div className={styles.statsStrip}>
+        {data.metrics.slice(0, 4).map((metric) => {
+          const Icon = metric.icon;
+
+          return (
+            <div key={metric.key} className={styles.statPill}>
+              <div className={styles.statPillIcon}>
+                <Icon size={13} />
+              </div>
+              <div>
+                <div className={styles.statNum}>{metric.todayCount}</div>
+                <div className={styles.statLabel}>{metric.key}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <form className={styles.filterBar} method="get">
+        <div className={styles.searchWrap}>
+          <Search className={styles.searchIcon} size={14} />
+          <input
+            className={styles.searchInput}
+            defaultValue={data.filters.search}
+            name="search"
+            placeholder="Search by name..."
+          />
+        </div>
+        <select className={styles.select} defaultValue={data.filters.metric} name="metric">
+          <option value="">All Metrics</option>
+          {metricCatalog.map((metric) => (
+            <option key={metric.key} value={metric.key}>
+              {metric.key}
+            </option>
+          ))}
+        </select>
+        <input
+          className={styles.select}
+          defaultValue={data.filters.activityType}
+          name="activityType"
+          placeholder="Type"
+        />
+        <button className={styles.secondaryButton} type="submit">
+          Apply
+        </button>
+      </form>
+
+      <div id="activity-form">
+        <ActivityEntryForm />
+      </div>
+
+      <ActivityTable entries={data.entries} />
     </>
   );
 }
 
-function ProgressView() {
+function MetricProgressCard({ metric }: { metric: TrackerMetric }) {
+  const percentage = metric.dailyGoal > 0 ? Math.round((metric.todayCount / metric.dailyGoal) * 100) : 0;
+
+  return (
+    <div className={styles.metricCard}>
+      <div className={styles.metricCardHead}>
+        <div className={styles.metricCardTitle}>
+          <div className={styles.metricIcon}>
+            <metric.icon size={13} />
+          </div>
+          <div className={styles.metricName}>{metric.key}</div>
+        </div>
+        <div className={styles.metricPercent}>{percentage}%</div>
+      </div>
+      <div className={styles.metricRingRow}>
+        <Ring color={metric.color} goal={metric.dailyGoal} value={metric.todayCount} />
+        <div className={styles.metricStats}>
+          <div className={styles.metricStatRow}>
+            <span className={styles.metricStatLabel}>Today</span>
+            <span className={styles.metricStatValue}>{metric.todayCount}</span>
+          </div>
+          <div className={styles.metricStatRow}>
+            <span className={styles.metricStatLabel}>Daily Goal</span>
+            <span className={styles.metricStatValue}>{metric.dailyGoal}</span>
+          </div>
+          <div className={styles.metricStatRow}>
+            <span className={styles.metricStatLabel}>Monthly Total</span>
+            <span className={styles.metricStatValue}>{metric.monthCount}</span>
+          </div>
+        </div>
+      </div>
+      <div className={styles.barChart}>
+        {metric.bars.map((bar, index) => (
+          <div
+            key={`${metric.key}-${index}`}
+            className={styles.dayBar}
+            style={{ background: metric.color, height: `${Math.max(bar * 5, 4)}px` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgressView({ data }: { data: ProgressPageData }) {
   return (
     <>
       <div className={styles.pageHeader}>
         <div>
           <div className={styles.pageTitle}>Monthly Progress</div>
-          <div className={styles.pageMeta}>Performance overview for the month</div>
+          <div className={styles.pageMeta}>Calculated from saved activity and live goals</div>
         </div>
-        <button className={styles.actionButton} type="button">
+        <div className={styles.actionButton}>
           <CalendarRange size={16} />
-          Export PDF
-        </button>
+          Live Summary
+        </div>
       </div>
 
       <div className={styles.summaryStrip}>
-        {monthlySummaryCards.map((card, index) => {
+        {data.summaryCards.map((card, index) => {
           const highlight = index === 0;
+
           return (
             <div
               key={card.label}
@@ -273,53 +462,13 @@ function ProgressView() {
 
       <div className={styles.paceAlert}>
         <Target size={16} />
-        You are slightly behind pace on appts and apps, but calls and followups are
-        carrying the month.
+        {data.paceMessage}
       </div>
 
       <div className={styles.metricGrid}>
-        {metricDefinitions.map((metric) => {
-          const pct = Math.round((metric.current / metric.dailyGoal) * 100);
-          return (
-            <div key={metric.key} className={styles.metricCard}>
-              <div className={styles.metricCardHead}>
-                <div className={styles.metricCardTitle}>
-                  <div className={styles.metricIcon}>
-                    <metric.icon size={13} />
-                  </div>
-                  <div className={styles.metricName}>{metric.key}</div>
-                </div>
-                <div className={styles.metricPercent}>{pct}%</div>
-              </div>
-              <div className={styles.metricRingRow}>
-                <Ring color={metric.color} goal={metric.dailyGoal} value={metric.current} />
-                <div className={styles.metricStats}>
-                  <div className={styles.metricStatRow}>
-                    <span className={styles.metricStatLabel}>Today</span>
-                    <span className={styles.metricStatValue}>{metric.current}</span>
-                  </div>
-                  <div className={styles.metricStatRow}>
-                    <span className={styles.metricStatLabel}>Goal</span>
-                    <span className={styles.metricStatValue}>{metric.dailyGoal}</span>
-                  </div>
-                  <div className={styles.metricStatRow}>
-                    <span className={styles.metricStatLabel}>Weekly</span>
-                    <span className={styles.metricStatValue}>{metric.weeklyGoal}</span>
-                  </div>
-                </div>
-              </div>
-              <div className={styles.barChart}>
-                {metric.bars.map((bar, index) => (
-                  <div
-                    key={`${metric.key}-${index}`}
-                    className={styles.dayBar}
-                    style={{ background: metric.color, height: `${Math.max(bar * 3, 4)}px` }}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        {data.metrics.map((metric) => (
+          <MetricProgressCard key={metric.key} metric={metric} />
+        ))}
       </div>
 
       <section className={styles.panel}>
@@ -328,20 +477,20 @@ function ProgressView() {
             <CalendarDays size={16} />
             Daily Activity - All Metrics
           </div>
-          <div className={styles.panelBadge}>March 2026</div>
+          <div className={styles.panelBadge}>This Month</div>
         </div>
         <div className={styles.heatmapWrap}>
           <div className={styles.heatmapRow}>
-            {Array.from({ length: 31 }, (_, index) => {
-              const height = 8 + ((index * 7) % 48);
-              const hue = index % 3 === 0 ? "#008bc7" : index % 3 === 1 ? "#3aabf0" : "#172852";
-              return (
-                <div key={index + 1} className={styles.heatColumn}>
-                  <div className={styles.heatDay}>{index + 1}</div>
-                  <div className={styles.heatBar} style={{ background: hue, height }} />
-                </div>
-              );
-            })}
+            {data.heatmap.map((item) => (
+              <div key={item.day} className={styles.heatColumn}>
+                <div className={styles.heatDay}>{item.day}</div>
+                <div
+                  className={styles.heatBar}
+                  style={{ background: item.color, height: `${Math.max(item.total * 3, 6)}px` }}
+                  title={`${item.total} activities`}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -349,18 +498,18 @@ function ProgressView() {
   );
 }
 
-function SettingsView() {
+function SettingsView({ data }: { data: SettingsPageData }) {
   return (
-    <>
+    <form action={updateTrackerSettings} className={styles.settingsForm}>
       <div className={styles.pageHeader}>
         <div>
           <div className={styles.pageTitle}>Settings</div>
           <div className={styles.pageMeta}>
-            Manage your goals, profile, and preferences
+            Profile, goals, and preferences stored in Supabase
           </div>
         </div>
-        <button className={styles.saveButton} type="button">
-          <Settings size={15} />
+        <button className={styles.saveButton} type="submit">
+          <Save size={15} />
           Save Changes
         </button>
       </div>
@@ -373,12 +522,26 @@ function SettingsView() {
         <div className={styles.settingsCard}>
           <div className={styles.settingsRow}>
             <div className={styles.settingsField}>
-              <label className={styles.settingsFieldLabel}>Full Name</label>
-              <input className={styles.settingsInput} defaultValue="Channing Moore" />
+              <label className={styles.settingsFieldLabel} htmlFor="full_name">
+                Full Name
+              </label>
+              <input
+                className={styles.settingsInput}
+                defaultValue={data.profile.fullName}
+                id="full_name"
+                name="full_name"
+              />
             </div>
             <div className={styles.settingsField}>
-              <label className={styles.settingsFieldLabel}>Role / Title</label>
-              <input className={styles.settingsInput} defaultValue="Loan Officer" />
+              <label className={styles.settingsFieldLabel} htmlFor="role_title">
+                Role / Title
+              </label>
+              <input
+                className={styles.settingsInput}
+                defaultValue={data.profile.roleTitle}
+                id="role_title"
+                name="role_title"
+              />
             </div>
           </div>
         </div>
@@ -396,7 +559,7 @@ function SettingsView() {
             <div>Weekly Goal</div>
             <div>Monthly Est.</div>
           </div>
-          {metricDefinitions.map((metric) => (
+          {data.metrics.map((metric) => (
             <div key={metric.key} className={styles.goalRow}>
               <div className={styles.goalMetric}>
                 <div className={styles.metricIcon}>
@@ -404,8 +567,18 @@ function SettingsView() {
                 </div>
                 <span>{metric.key}</span>
               </div>
-              <input className={styles.settingsInput} defaultValue={metric.dailyGoal} />
-              <input className={styles.settingsInput} defaultValue={metric.weeklyGoal} />
+              <input
+                className={styles.settingsInput}
+                defaultValue={metric.dailyGoal}
+                name={`${metric.key}_daily_goal`}
+                type="number"
+              />
+              <input
+                className={styles.settingsInput}
+                defaultValue={metric.weeklyGoal}
+                name={`${metric.key}_weekly_goal`}
+                type="number"
+              />
               <div className={styles.pageMeta}>{metric.weeklyGoal * 4}</div>
             </div>
           ))}
@@ -420,45 +593,63 @@ function SettingsView() {
         <div className={styles.settingsCard}>
           <div className={styles.settingsRow}>
             <div className={styles.settingsField}>
-              <label className={styles.settingsFieldLabel}>Auto-Sync Time</label>
+              <label className={styles.settingsFieldLabel} htmlFor="sync_hour">
+                Auto-Sync Time
+              </label>
               <div className={styles.settingsHint}>
-                Activities automatically sync to Google Sheets at this time each day
+                Stored in Supabase for your account only
               </div>
-              <select className={styles.settingsInput} defaultValue="6:00 PM">
-                <option>4:00 PM</option>
-                <option>5:00 PM</option>
-                <option>6:00 PM</option>
-                <option>7:00 PM</option>
+              <select
+                className={styles.settingsInput}
+                defaultValue={String(data.profile.syncHour)}
+                id="sync_hour"
+                name="sync_hour"
+              >
+                <option value="16">4:00 PM</option>
+                <option value="17">5:00 PM</option>
+                <option value="18">6:00 PM</option>
+                <option value="19">7:00 PM</option>
+                <option value="20">8:00 PM</option>
               </select>
             </div>
             <div className={styles.settingsField}>
-              <label className={styles.settingsFieldLabel}>Default View</label>
+              <label className={styles.settingsFieldLabel} htmlFor="default_view">
+                Default View
+              </label>
               <div className={styles.settingsHint}>
-                Which page opens when you first load the tracker
+                Used when you return to the app later
               </div>
-              <select className={styles.settingsInput} defaultValue="Dashboard">
-                <option>Dashboard</option>
-                <option>Activity Log</option>
-                <option>Progress</option>
+              <select
+                className={styles.settingsInput}
+                defaultValue={data.profile.defaultView}
+                id="default_view"
+                name="default_view"
+              >
+                <option value="dashboard">Dashboard</option>
+                <option value="activity">Activity Log</option>
+                <option value="progress">Progress</option>
+                <option value="settings">Settings</option>
               </select>
             </div>
           </div>
         </div>
       </section>
-    </>
+    </form>
   );
 }
 
-export function TrackerShell({ view }: TrackerShellProps) {
-  const totalScore = metricDefinitions.reduce((sum, metric) => sum + metric.current, 0);
+export function TrackerShell(props: TrackerShellProps) {
   const title =
-    view === "dashboard"
+    props.view === "dashboard"
       ? "Dashboard"
-      : view === "activity"
+      : props.view === "activity"
         ? "Activity Log"
-        : view === "progress"
+        : props.view === "progress"
           ? "Progress"
           : "Settings";
+
+  const profile = props.data.profile as TrackerProfile;
+  const score = props.data.metrics.reduce((sum, metric) => sum + metric.todayCount, 0);
 
   return (
     <main className={styles.shell}>
@@ -469,10 +660,10 @@ export function TrackerShell({ view }: TrackerShellProps) {
         </div>
         <div className={styles.sidebarLabel}>Workspace</div>
         <ul className={styles.navList}>
-          {navItems.map(({ href, label, icon: Icon, view: navView }) => (
+          {navItems.map(({ href, label, icon: Icon, view }) => (
             <li key={href}>
               <Link
-                className={view === navView ? styles.navLinkActive : styles.navLink}
+                className={props.view === view ? styles.navLinkActive : styles.navLink}
                 href={href}
               >
                 <Icon size={16} />
@@ -483,10 +674,10 @@ export function TrackerShell({ view }: TrackerShellProps) {
         </ul>
         <div className={styles.sidebarBottom}>
           <div className={styles.sidebarUser}>
-            <div className={styles.avatar}>CM</div>
+            <div className={styles.avatar}>{profile.initials}</div>
             <div>
-              <div className={styles.userName}>Channing Moore</div>
-              <div className={styles.userRole}>Loan Officer</div>
+              <div className={styles.userName}>{profile.fullName}</div>
+              <div className={styles.userRole}>{profile.roleTitle}</div>
             </div>
           </div>
         </div>
@@ -504,25 +695,22 @@ export function TrackerShell({ view }: TrackerShellProps) {
                 Daily
               </button>
               <button className={styles.periodButton} type="button">
-                Weekly
+                Monthly
               </button>
             </div>
             <div className={styles.scoreBadge}>
               <Sparkles size={15} />
-              {totalScore} pts
+              {score} pts
             </div>
-            <button className={styles.actionButton} type="button">
-              <Plus size={16} />
-              Record Activity
-            </button>
           </div>
         </div>
 
         <div className={styles.content}>
-          {view === "dashboard" ? <DashboardView /> : null}
-          {view === "activity" ? <ActivityView /> : null}
-          {view === "progress" ? <ProgressView /> : null}
-          {view === "settings" ? <SettingsView /> : null}
+          <FlashMessage flash={props.flash} />
+          {props.view === "dashboard" ? <DashboardView data={props.data} /> : null}
+          {props.view === "activity" ? <ActivityView data={props.data} /> : null}
+          {props.view === "progress" ? <ProgressView data={props.data} /> : null}
+          {props.view === "settings" ? <SettingsView data={props.data} /> : null}
         </div>
       </div>
     </main>

@@ -1,5 +1,8 @@
 import { TrackerShell } from "@/components/tracker-shell";
+import { getDashboardPageData } from "@/lib/db/tracker";
 
-export default function DashboardPage() {
-  return <TrackerShell view="dashboard" />;
+export default async function DashboardPage() {
+  const data = await getDashboardPageData();
+
+  return <TrackerShell data={data} view="dashboard" />;
 }
