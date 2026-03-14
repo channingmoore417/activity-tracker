@@ -11,6 +11,7 @@ export default async function ActivityPage({
     search: typeof params.search === "string" ? params.search : "",
     metric: typeof params.metric === "string" ? params.metric : "",
     activityType: typeof params.activityType === "string" ? params.activityType : "",
+    sort: typeof params.sort === "string" ? params.sort : "",
   });
 
   return (

@@ -15,13 +15,9 @@ export type Database = {
           user_id: string;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           contact_name: string;
           activity_type: string;
           count: number;
@@ -36,13 +32,9 @@ export type Database = {
           user_id: string;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           contact_name: string;
           activity_type: string;
           count?: number;
@@ -57,13 +49,9 @@ export type Database = {
           user_id?: string;
           metric?:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           contact_name?: string;
           activity_type?: string;
           count?: number;
@@ -74,19 +62,56 @@ export type Database = {
           updated_at?: string;
         };
       };
+      contacts: {
+        Row: {
+          id: string;
+          user_id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          contact_type: "Realtor" | "Past Client" | "Referral" | "Lead";
+          notes: string | null;
+          activity_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          first_name: string;
+          last_name: string;
+          email?: string;
+          phone?: string;
+          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead";
+          notes?: string | null;
+          activity_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+          phone?: string;
+          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead";
+          notes?: string | null;
+          activity_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       goals: {
         Row: {
           id: string;
           user_id: string;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           daily_goal: number;
           weekly_goal: number;
           created_at: string;
@@ -97,13 +122,9 @@ export type Database = {
           user_id: string;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           daily_goal?: number;
           weekly_goal?: number;
           created_at?: string;
@@ -114,13 +135,9 @@ export type Database = {
           user_id?: string;
           metric?:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups";
+            | "leads"
+            | "credits";
           daily_goal?: number;
           weekly_goal?: number;
           created_at?: string;
@@ -129,8 +146,9 @@ export type Database = {
       };
       profiles: {
         Row: {
-          id: string;
-          full_name: string;
+          user_id: string;
+          first_name: string;
+          last_name: string;
           role_title: string;
           default_view: string;
           sync_hour: number;
@@ -138,8 +156,9 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          id: string;
-          full_name: string;
+          user_id: string;
+          first_name: string;
+          last_name: string;
           role_title?: string;
           default_view?: string;
           sync_hour?: number;
@@ -147,12 +166,36 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          full_name?: string;
+          user_id?: string;
+          first_name?: string;
+          last_name?: string;
           role_title?: string;
           default_view?: string;
           sync_hour?: number;
           created_at?: string;
+          updated_at?: string;
+        };
+      };
+      streaks: {
+        Row: {
+          user_id: string;
+          current_streak: number;
+          longest_streak: number;
+          last_goal_date: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          current_streak?: number;
+          longest_streak?: number;
+          last_goal_date?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          current_streak?: number;
+          longest_streak?: number;
+          last_goal_date?: string | null;
           updated_at?: string;
         };
       };
@@ -190,13 +233,9 @@ export type Database = {
           activity_date: string | null;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups"
+            | "leads"
+            | "credits"
             | null;
           total_count: number | null;
         };
@@ -207,13 +246,9 @@ export type Database = {
           month_start: string | null;
           metric:
             | "calls"
-            | "leads"
             | "convs"
-            | "appts"
-            | "apps"
-            | "locked"
-            | "past"
-            | "followups"
+            | "leads"
+            | "credits"
             | null;
           total_count: number | null;
         };
@@ -223,13 +258,9 @@ export type Database = {
     Enums: {
       activity_metric:
         | "calls"
-        | "leads"
         | "convs"
-        | "appts"
-        | "apps"
-        | "locked"
-        | "past"
-        | "followups";
+        | "leads"
+        | "credits";
     };
     CompositeTypes: Record<string, never>;
   };

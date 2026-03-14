@@ -1,0 +1,493 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 40, 82, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #d3e4ef;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(23, 40, 82, 0.2);
+  font-family: var(--font-bayou), sans-serif;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #d3e4ef;
+  padding: 18px 22px 16px;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #172852;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #5a7a94;
+  font: inherit;
+  cursor: pointer;
+}
+
+.modalBody {
+  padding: 22px;
+}
+
+.stepLabel {
+  margin-bottom: 16px;
+  color: #5a7a94;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.metricTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px 12px;
+  color: #172852;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.metricTile:hover {
+  border-color: #008bc7;
+  background: #e8f6fd;
+}
+
+.metricTileActive {
+  composes: metricTile;
+  border-color: #008bc7;
+  background: #e8f6fd;
+}
+
+.metricTileIcon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #eef4f9;
+  color: #008bc7;
+}
+
+.metricTileActive .metricTileIcon {
+  background: #008bc7;
+  color: #fff;
+}
+
+.subtypeList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subtypeButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 10px;
+  background: #fff;
+  padding: 13px 16px;
+  color: #172852;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.subtypeButton:hover {
+  border-color: #008bc7;
+  background: #e8f6fd;
+}
+
+.subtypeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #d3e4ef;
+  flex-shrink: 0;
+}
+
+.subtypeButton:hover .subtypeDot {
+  background: #008bc7;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.inputLabel {
+  color: #172852;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #172852;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  padding: 12px 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+  border-color: #008bc7;
+  box-shadow: 0 0 0 3px rgba(0, 139, 199, 0.1);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding: 16px 0;
+}
+
+.stepperButton {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #172852;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.stepperButton:hover {
+  border-color: #008bc7;
+  background: #e8f6fd;
+}
+
+.stepperValue {
+  min-width: 56px;
+  text-align: center;
+  color: #172852;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.logButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #172852 0%, #008bc7 100%);
+  padding: 11px 24px;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.logButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 139, 199, 0.35);
+}
+
+.logButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Mobile FAB — hidden on desktop, shown ≤768px */
+.fab {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #172852 0%, #008bc7 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 139, 199, 0.45);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+.fab:hover {
+  transform: scale(1.06);
+}
+
+@media (max-width: 768px) {
+  .logButton {
+    display: none;
+  }
+
+  .fab {
+    display: flex;
+  }
+}
+
+/* Full-width submit button inside the modal */
+.submitButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #008bc7 0%, #3aabf0 100%);
+  padding: 14px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 139, 199, 0.35);
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.backRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.backButton {
+  border: 0;
+  background: transparent;
+  color: #5a7a94;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.successBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.successIcon {
+  display: flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.successTitle {
+  color: #172852;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.successTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d3e4ef;
+  border-radius: 999px;
+  background: #e8f6fd;
+  padding: 6px 14px;
+  color: #008bc7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.contactPrompt {
+  width: 100%;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 14px;
+  background: #eef4f9;
+  padding: 16px;
+}
+
+.contactPromptTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: #172852;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contactPromptDesc {
+  margin-bottom: 12px;
+  color: #5a7a94;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.contactSaveButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 10px;
+  background: #172852;
+  padding: 11px;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.contactSaveButton:disabled {
+  opacity: 0.6;
+}
+
+.contactSaved {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  background: #dcfce7;
+  padding: 11px;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.streakBanner {
+  width: 100%;
+  border: 1.5px solid #fde047;
+  border-radius: 14px;
+  background: #fef9c3;
+  padding: 16px;
+  text-align: center;
+}
+
+.streakEmoji {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.streakTitle {
+  color: #854d0e;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.streakSub {
+  color: #a16207;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.doneButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid #d3e4ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 13px;
+  color: #172852;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  background: #e8f6fd;
+  padding: 3px 8px;
+  color: #008bc7;
+  font-size: 11px;
+  font-weight: 700;
+}
