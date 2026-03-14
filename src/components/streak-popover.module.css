@@ -17,11 +17,14 @@
   position: fixed;
   z-index: 9999;
   width: 360px;
+  max-width: calc(100vw - 24px);
   border-radius: 20px;
   background: #fff;
   box-shadow: 0 12px 48px rgba(23, 40, 82, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06);
   padding: 22px 20px 18px;
   animation: popoverIn 0.15s ease-out;
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
 }
 
 @keyframes popoverIn {

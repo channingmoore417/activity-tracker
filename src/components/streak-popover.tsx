@@ -107,7 +107,8 @@ export function StreakPopover({ streak, children }: StreakPopoverProps) {
     if (!pillRef.current) return;
     const rect = pillRef.current.getBoundingClientRect();
     const top = rect.bottom + 8;
-    const right = window.innerWidth - rect.right;
+    const isMobile = window.innerWidth < 480;
+    const right = isMobile ? 12 : window.innerWidth - rect.right;
     setPos({ top, right });
   }, []);
 
