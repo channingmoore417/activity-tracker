@@ -1169,11 +1169,11 @@ export function TrackerShell(props: TrackerShellProps) {
     <main className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
-          <img
-            src="/logo.png"
-            alt="Bayou OS"
-            style={{ width: '160px', height: 'auto', filter: 'brightness(0) invert(1)' }}
-          />
+          <svg width="220" height="52" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+            <text x="0" y="38" fontFamily="'Poppins',sans-serif" fontSize="38" fontWeight="900" fill="white" letterSpacing="-2" fontStyle="italic">BAYOU OS</text>
+            <line x1="0" y1="44" x2="218" y2="44" stroke="white" strokeWidth="1.5" opacity="0.2"/>
+            <text x="1" y="52" fontFamily="'Poppins',sans-serif" fontSize="9" fontWeight="600" fill="rgba(255,255,255,0.5)" letterSpacing="4">SALES OPERATING SYSTEM</text>
+          </svg>
         </div>
         <div className={styles.sidebarLabel}>Workspace</div>
         <ul className={styles.navList}>

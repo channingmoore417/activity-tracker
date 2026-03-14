@@ -1,27 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import {
-  Activity,
-  BarChart3,
-  Clock3,
-  Eye,
-  EyeOff,
-  Mail,
-  TrendingUp,
-} from "lucide-react";
+import { useState } from "react";
+import { Eye, EyeOff, Key, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./bayou-auth.module.css";
 
 type AuthMode = "login" | "signup";
-
-const pills = [
-  { icon: Activity, label: "8 Activity Types" },
-  { icon: BarChart3, label: "Monthly Reports" },
-  { icon: Clock3, label: "Auto-Sync to Sheets" },
-];
 
 function GoogleMark() {
   return (
@@ -54,37 +39,9 @@ export function BayouAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (active) {
-        setSessionEmail(session?.user.email ?? null);
-      }
-    }
-
-    loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionEmail(session?.user.email ?? null);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -152,180 +109,117 @@ export function BayouAuth() {
     }
   }
 
-  async function handleSignOut() {
-    const { error: signOutError } = await supabase.auth.signOut();
-
-    if (signOutError) {
-      setError(signOutError.message);
-      return;
-    }
-
-    setMessage("Signed out.");
-    setSessionEmail(null);
-  }
-
   return (
     <main className={styles.shell}>
-      <section className={styles.left}>
-        <div className={styles.leftBg}>
-          <div className={`${styles.orb} ${styles.orbOne}`} />
-          <div className={`${styles.orb} ${styles.orbTwo}`} />
-          <div className={`${styles.orb} ${styles.orbThree}`} />
-          <div className={styles.grid} />
+      <div className={styles.card}>
+        <div className={styles.logoWrap}>
+          <svg width="260" height="58" viewBox="0 0 260 58" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="loginGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#172852"/>
+                <stop offset="50%" stopColor="#008BC7"/>
+                <stop offset="100%" stopColor="#3AABF0"/>
+              </linearGradient>
+              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#172852"/>
+                <stop offset="100%" stopColor="#3AABF0"/>
+              </linearGradient>
+            </defs>
+            <text x="0" y="42" fontFamily="'Poppins',sans-serif" fontSize="42" fontWeight="900" fill="url(#loginGrad)" letterSpacing="-2" fontStyle="italic">BAYOU OS</text>
+            <line x1="0" y1="49" x2="255" y2="49" stroke="url(#lineGrad)" strokeWidth="1.5" opacity="0.35"/>
+            <text x="1" y="58" fontFamily="'Poppins',sans-serif" fontSize="9" fontWeight="600" fill="#008BC7" letterSpacing="5">SALES OPERATING SYSTEM</text>
+          </svg>
         </div>
 
-        <div className={styles.leftContent}>
-          <div className={styles.logo}>
-            <div className={styles.logoIcon}>
-              <TrendingUp size={22} />
-            </div>
-            <div>
-              <div className={styles.logoName}>Bayou Mortgage</div>
-              <div className={styles.logoSub}>Activity Tracker</div>
-            </div>
-          </div>
-
-          <h1 className={styles.headline}>
-            Track Every
-            <br />
-            Activity.
-            <br />
-            <span>Hit Every Goal.</span>
-          </h1>
-          <p className={styles.body}>
-            Your daily dashboard for calls, conversations, appointments, and
-            more, built for loan officers who want to stay on top of their numbers
-            without the noise.
-          </p>
-
-          <div className={styles.pillRow}>
-            {pills.map(({ icon: Icon, label }) => (
-              <div key={label} className={styles.pill}>
-                <span className={styles.pillIcon}>
-                  <Icon size={12} />
-                </span>
-                {label}
-              </div>
-            ))}
-          </div>
+        <div className={styles.tabs}>
+          <button
+            className={mode === "login" ? styles.tabActive : styles.tab}
+            onClick={() => setMode("login")}
+            type="button"
+          >
+            Sign In
+          </button>
+          <button
+            className={mode === "signup" ? styles.tabActive : styles.tab}
+            onClick={() => setMode("signup")}
+            type="button"
+          >
+            Create Account
+          </button>
         </div>
 
-        <div className={styles.leftFooter}>© 2026 Bayou Mortgage · NMLS #1845349</div>
-      </section>
-
-      <section className={styles.right}>
-        <div className={styles.card}>
-          <div className={styles.eyebrow}>Welcome back</div>
-          <h1 className={styles.title}>Sign in to your account</h1>
-          <p className={styles.subtitle}>
-            Track your daily activity and hit your monthly goals.
-          </p>
-
-          <div className={styles.tabs}>
-            <button
-              className={mode === "login" ? styles.tabActive : styles.tab}
-              onClick={() => setMode("login")}
-              type="button"
-            >
-              Sign In
-            </button>
-            <button
-              className={mode === "signup" ? styles.tabActive : styles.tab}
-              onClick={() => setMode("signup")}
-              type="button"
-            >
-              Create Account
-            </button>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="email">
+              Email Address
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                className={styles.input}
+                id="email"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@bayoumortgage.com"
+                required
+                type="email"
+                value={email}
+              />
+              <Mail className={styles.inputIcon} size={15} />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="email">
-                Email Address
-              </label>
-              <div className={styles.inputWrap}>
-                <input
-                  className={styles.input}
-                  id="email"
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@bayoumortgage.com"
-                  required
-                  type="email"
-                  value={email}
-                />
-                <Mail className={styles.inputIcon} size={15} />
-              </div>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="password">
-                Password
-              </label>
-              <div className={styles.inputWrap}>
-                <input
-                  className={styles.inputPassword}
-                  id="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                />
-                <Activity className={styles.inputIcon} size={15} />
-                <button
-                  className={styles.toggle}
-                  onClick={() => setShowPassword((value) => !value)}
-                  type="button"
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.forgotRow}>
-              <button className={styles.forgot} onClick={handleForgotPassword} type="button">
-                Forgot password?
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="password">
+              Password
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                className={styles.inputPassword}
+                id="password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type={showPassword ? "text" : "password"}
+                value={password}
+              />
+              <Key className={styles.inputIcon} size={15} />
+              <button
+                className={styles.toggle}
+                onClick={() => setShowPassword((value) => !value)}
+                type="button"
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-
-            <button className={styles.submit} disabled={isSubmitting} type="submit">
-              {isSubmitting
-                ? "Working..."
-                : mode === "login"
-                  ? "Sign In"
-                  : "Create Account"}
-            </button>
-          </form>
-
-          <div className={styles.divider}>
-            <div className={styles.dividerLine} />
-            <span className={styles.dividerText}>or continue with</span>
-            <div className={styles.dividerLine} />
           </div>
 
-          <button className={styles.sso} onClick={handleGoogleLogin} type="button">
-            <GoogleMark />
-            Continue with Google
+          <div className={styles.forgotRow}>
+            <button className={styles.forgot} onClick={handleForgotPassword} type="button">
+              Forgot password?
+            </button>
+          </div>
+
+          <button className={styles.submit} disabled={isSubmitting} type="submit">
+            {isSubmitting
+              ? "Working..."
+              : mode === "login"
+                ? "Sign In"
+                : "Create Account"}
           </button>
+        </form>
 
-          <p className={styles.subtitle} style={{ marginBottom: 0, marginTop: 10 }}>
-            Need a quick look at the current auth state? Visit{" "}
-            <Link href="/supabase-test">/supabase-test</Link>.
-          </p>
-
-          {message ? <div className={styles.message}>{message}</div> : null}
-          {error ? <div className={styles.error}>{error}</div> : null}
-
-          <div className={styles.sessionCard}>
-            <div>
-              <div className={styles.sessionLabel}>Current User</div>
-              <div className={styles.sessionValue}>{sessionEmail ?? "No active session"}</div>
-            </div>
-            <button className={styles.signOut} onClick={handleSignOut} type="button">
-              Sign out
-            </button>
-          </div>
+        <div className={styles.divider}>
+          <div className={styles.dividerLine} />
+          <span className={styles.dividerText}>or continue with</span>
+          <div className={styles.dividerLine} />
         </div>
-      </section>
+
+        <button className={styles.sso} onClick={handleGoogleLogin} type="button">
+          <GoogleMark />
+          Continue with Google
+        </button>
+
+        {message ? <div className={styles.message}>{message}</div> : null}
+        {error ? <div className={styles.error}>{error}</div> : null}
+      </div>
     </main>
   );
 }
