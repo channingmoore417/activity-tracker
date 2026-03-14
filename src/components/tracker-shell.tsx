@@ -23,7 +23,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { deleteActivity, resetStreak, updateTrackerSettings } from "@/lib/db/tracker-actions";
+import { deleteActivity, updateTrackerSettings } from "@/lib/db/tracker-actions";
 import { ActivityLogger } from "@/components/activity-logger";
 import { ContactsViewClient } from "@/components/contacts-view-client";
 import { PrintButton } from "@/components/print-button";
@@ -1021,36 +1021,6 @@ function SettingsView({ data }: { data: SettingsPageData }) {
           Save Changes
         </button>
       </div>
-
-      {/* Streak */}
-      <section className={styles.settingsSection}>
-        <div className={styles.settingsLabel}>
-          <Star size={14} />
-          Streak
-        </div>
-        <div className={styles.streakSettingsCard}>
-          <div className={styles.streakSettingsLeft}>
-            <div className={styles.streakSettingsFlame}>🔥</div>
-            <div>
-              <div className={styles.streakSettingsTitle}>Day Streak</div>
-              <div className={styles.streakSettingsSub}>
-                {data.streak.currentStreak > 0
-                  ? `${data.streak.currentStreak} day${data.streak.currentStreak === 1 ? "" : "s"} — longest: ${data.streak.longestStreak}`
-                  : "Hit 100 pts daily to build your streak"}
-              </div>
-            </div>
-          </div>
-          <div className={styles.streakSettingsRight}>
-            <div style={{ textAlign: "right" }}>
-              <div className={styles.streakSettingsCount}>{data.streak.currentStreak}</div>
-              <div className={styles.streakSettingsLabel}>days in a row</div>
-            </div>
-            <button className={styles.btnResetStreak} type="button" formAction={resetStreak}>
-              Reset
-            </button>
-          </div>
-        </div>
-      </section>
 
       {/* Profile */}
       <section className={styles.settingsSection}>
