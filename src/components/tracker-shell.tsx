@@ -23,7 +23,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { deleteActivity, updateTrackerSettings } from "@/lib/db/tracker-actions";
+import { deleteActivity, resetStreak, updateTrackerSettings } from "@/lib/db/tracker-actions";
 import { ActivityLogger } from "@/components/activity-logger";
 import { ContactsViewClient } from "@/components/contacts-view-client";
 import { PrintButton } from "@/components/print-button";
@@ -36,6 +36,7 @@ import type {
   DashboardData,
   ProgressMetricData,
   ProgressPageData,
+  SettingsGoal,
   SettingsPageData,
   StreakData,
   TrackerActivityEntry,
@@ -999,21 +1000,59 @@ function ProgressView({ data }: { data: ProgressPageData }) {
 }
 
 function SettingsView({ data }: { data: SettingsPageData }) {
+  const GOAL_ICONS: Record<string, typeof Star> = {
+    calls: Activity,
+    convs: ClipboardList,
+    leads: Users,
+    credits: BarChart3,
+  };
+
   return (
     <form action={updateTrackerSettings} className={styles.settingsForm}>
       <div className={styles.pageHeader}>
         <div>
           <div className={styles.pageTitle}>Settings</div>
           <div className={styles.pageMeta}>
-            Profile, goals, and preferences stored in Supabase
+            Manage your goals, profile, and preferences
           </div>
         </div>
-        <button className={styles.saveButton} type="submit">
+        <button className={styles.btnSaveSettings} type="submit">
           <Save size={15} />
           Save Changes
         </button>
       </div>
 
+      {/* Streak */}
+      <section className={styles.settingsSection}>
+        <div className={styles.settingsLabel}>
+          <Star size={14} />
+          Streak
+        </div>
+        <div className={styles.streakSettingsCard}>
+          <div className={styles.streakSettingsLeft}>
+            <div className={styles.streakSettingsFlame}>🔥</div>
+            <div>
+              <div className={styles.streakSettingsTitle}>Day Streak</div>
+              <div className={styles.streakSettingsSub}>
+                {data.streak.currentStreak > 0
+                  ? `${data.streak.currentStreak} day${data.streak.currentStreak === 1 ? "" : "s"} — longest: ${data.streak.longestStreak}`
+                  : "Hit 100 pts daily to build your streak"}
+              </div>
+            </div>
+          </div>
+          <div className={styles.streakSettingsRight}>
+            <div style={{ textAlign: "right" }}>
+              <div className={styles.streakSettingsCount}>{data.streak.currentStreak}</div>
+              <div className={styles.streakSettingsLabel}>days in a row</div>
+            </div>
+            <button className={styles.btnResetStreak} type="button" formAction={resetStreak}>
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Profile */}
       <section className={styles.settingsSection}>
         <div className={styles.settingsLabel}>
           <User size={14} />
@@ -1044,22 +1083,21 @@ function SettingsView({ data }: { data: SettingsPageData }) {
               />
             </div>
           </div>
-          <div className={styles.settingsRow}>
-            <div className={styles.settingsField}>
-              <label className={styles.settingsFieldLabel} htmlFor="role_title">
-                Role / Title
-              </label>
-              <input
-                className={styles.settingsInput}
-                defaultValue={data.profile.roleTitle}
-                id="role_title"
-                name="role_title"
-              />
-            </div>
+          <div className={styles.settingsField} style={{ marginTop: 14 }}>
+            <label className={styles.settingsFieldLabel} htmlFor="role_title">
+              Role / Title
+            </label>
+            <input
+              className={styles.settingsInput}
+              defaultValue={data.profile.roleTitle}
+              id="role_title"
+              name="role_title"
+            />
           </div>
         </div>
       </section>
 
+      {/* Activity Goals */}
       <section className={styles.settingsSection}>
         <div className={styles.settingsLabel}>
           <Target size={14} />
@@ -1072,32 +1110,38 @@ function SettingsView({ data }: { data: SettingsPageData }) {
             <div>Weekly Goal</div>
             <div>Monthly Est.</div>
           </div>
-          {data.metrics.map((metric) => (
-            <div key={metric.key} className={styles.goalRow}>
-              <div className={styles.goalMetric}>
-                <div className={styles.metricIcon}>
-                  <metric.icon size={13} />
+          {data.goals.map((goal) => {
+            const GoalIcon = GOAL_ICONS[goal.key] ?? Activity;
+            return (
+              <div key={goal.key} className={styles.goalRow}>
+                <div className={styles.goalMetric}>
+                  <div className={styles.metricIcon}>
+                    <GoalIcon size={13} />
+                  </div>
+                  <span>{goal.label}</span>
                 </div>
-                <span>{metric.key}</span>
+                <input
+                  className={styles.settingsInput}
+                  defaultValue={goal.dailyGoal}
+                  name={`${goal.key}_daily_goal`}
+                  type="number"
+                  min={0}
+                />
+                <input
+                  className={styles.settingsInput}
+                  defaultValue={goal.weeklyGoal}
+                  name={`${goal.key}_weekly_goal`}
+                  type="number"
+                  min={0}
+                />
+                <div className={styles.pageMeta}>{goal.weeklyGoal * 4}</div>
               </div>
-              <input
-                className={styles.settingsInput}
-                defaultValue={metric.dailyGoal}
-                name={`${metric.key}_daily_goal`}
-                type="number"
-              />
-              <input
-                className={styles.settingsInput}
-                defaultValue={metric.weeklyGoal}
-                name={`${metric.key}_weekly_goal`}
-                type="number"
-              />
-              <div className={styles.pageMeta}>{metric.weeklyGoal * 4}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
+      {/* Preferences */}
       <section className={styles.settingsSection}>
         <div className={styles.settingsLabel}>
           <Settings size={14} />
@@ -1110,10 +1154,10 @@ function SettingsView({ data }: { data: SettingsPageData }) {
                 Auto-Sync Time
               </label>
               <div className={styles.settingsHint}>
-                Stored in Supabase for your account only
+                Activities automatically sync at this hour
               </div>
               <select
-                className={styles.settingsInput}
+                className={`${styles.settingsInput} ${styles.settingsSelect}`}
                 defaultValue={String(data.profile.syncHour)}
                 id="sync_hour"
                 name="sync_hour"
@@ -1123,6 +1167,7 @@ function SettingsView({ data }: { data: SettingsPageData }) {
                 <option value="18">6:00 PM</option>
                 <option value="19">7:00 PM</option>
                 <option value="20">8:00 PM</option>
+                <option value="21">9:00 PM</option>
               </select>
             </div>
             <div className={styles.settingsField}>
@@ -1133,7 +1178,7 @@ function SettingsView({ data }: { data: SettingsPageData }) {
                 Used when you return to the app later
               </div>
               <select
-                className={styles.settingsInput}
+                className={`${styles.settingsInput} ${styles.settingsSelect}`}
                 defaultValue={data.profile.defaultView}
                 id="default_view"
                 name="default_view"
@@ -1169,10 +1214,9 @@ export function TrackerShell(props: TrackerShellProps) {
     <main className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
-          <svg width="220" height="52" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
-            <text x="0" y="38" fontFamily="'Poppins',sans-serif" fontSize="38" fontWeight="900" fill="white" letterSpacing="-2" fontStyle="italic">BAYOU OS</text>
-            <line x1="0" y1="44" x2="218" y2="44" stroke="white" strokeWidth="1.5" opacity="0.2"/>
-            <text x="1" y="52" fontFamily="'Poppins',sans-serif" fontSize="9" fontWeight="600" fill="rgba(255,255,255,0.5)" letterSpacing="4">SALES OPERATING SYSTEM</text>
+          <svg width="200" height="56" viewBox="0 0 200 56" xmlns="http://www.w3.org/2000/svg">
+            <text x="0" y="40" fontFamily="'Poppins',sans-serif" fontSize="42" fontWeight="900" fill="white" letterSpacing="-3">BAYOU OS</text>
+            <text x="1" y="54" fontFamily="'Poppins',sans-serif" fontSize="8" fontWeight="600" fill="rgba(255,255,255,0.45)" letterSpacing="3.5">SALES OPERATING SYSTEM</text>
           </svg>
         </div>
         <div className={styles.sidebarLabel}>Workspace</div>

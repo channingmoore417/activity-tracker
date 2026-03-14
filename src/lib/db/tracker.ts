@@ -135,7 +135,6 @@ export type ContactRecord = {
 
 export type ContactsPageData = {
   profile: TrackerProfile;
-  metrics: TrackerMetric[];
   dailyScore: number;
   streak: StreakData;
   contacts: ContactRecord[];
@@ -144,9 +143,16 @@ export type ContactsPageData = {
   filters: { search: string; type: string };
 };
 
+export type SettingsGoal = {
+  key: MetricKey;
+  label: string;
+  dailyGoal: number;
+  weeklyGoal: number;
+};
+
 export type SettingsPageData = {
   profile: TrackerProfile;
-  metrics: TrackerMetric[];
+  goals: SettingsGoal[];
   dailyScore: number;
   streak: StreakData;
 };
@@ -727,7 +733,6 @@ export async function getContactsPageData(filters: {
 
   return {
     profile,
-    metrics: buildMetricData(goalRows, entries ?? []),
     dailyScore,
     streak,
     contacts: filtered.map((c) => ({
@@ -771,9 +776,19 @@ export async function getSettingsPageData(): Promise<SettingsPageData> {
     .filter((entry) => entry.activity_date === today)
     .reduce((sum, entry) => sum + (entry.score ?? 0), 0);
 
+  const goals: SettingsGoal[] = metricCatalog.map((cat) => {
+    const goalRow = goalRows.find((g) => g.metric === cat.key);
+    return {
+      key: cat.key,
+      label: cat.label,
+      dailyGoal: goalRow?.daily_goal ?? cat.defaultDailyGoal,
+      weeklyGoal: goalRow?.weekly_goal ?? cat.defaultWeeklyGoal,
+    };
+  });
+
   return {
     profile,
-    metrics: buildMetricData(goalRows, entries ?? []),
+    goals,
     dailyScore,
     streak,
   };

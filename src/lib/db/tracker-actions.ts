@@ -499,6 +499,21 @@ export async function saveOrUpdateContact(input: {
   return { success: true };
 }
 
+export async function resetStreak(): Promise<void> {
+  const { supabase, user } = await getAuthedSupabase();
+
+  await supabase
+    .from("streaks")
+    .update({ current_streak: 0, last_goal_date: null, history: {} })
+    .eq("user_id", user.id);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/settings");
+  revalidatePath("/activity");
+  revalidatePath("/progress");
+  redirect("/settings?saved=settings");
+}
+
 export async function deleteContact(contactId: string): Promise<{ success: boolean; error?: string }> {
   if (!contactId) return { success: false, error: "No contact ID." };
 

@@ -19,7 +19,6 @@
 
 .sidebarLogo {
   padding: 20px 24px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebarLogoText {
@@ -964,12 +963,20 @@
 .formTextarea {
   width: 100%;
   border: 1.5px solid #d3e4ef;
-  border-radius: 8px;
-  background: #fff;
+  border-radius: 12px;
+  background: #eef4f9;
   color: #172852;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.settingsInput:focus,
+.formInput:focus,
+.formTextarea:focus {
+  border-color: #008bc7;
+  background: #fff;
 }
 
 .searchInput {
@@ -981,7 +988,7 @@
 .formInput,
 .settingsInput {
   min-width: 140px;
-  padding: 10px 12px;
+  padding: 10px 14px;
 }
 
 .tableWrap {
@@ -1322,29 +1329,142 @@
   border-radius: 4px 4px 0 0;
 }
 
-.settingsForm,
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .settingsSection {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .settingsLabel {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   color: #5a7a94;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  margin-bottom: 10px;
 }
 
 .settingsCard {
   border: 1px solid #d3e4ef;
-  border-radius: 14px;
+  border-radius: 20px;
   background: #fff;
-  padding: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 16px rgba(23, 40, 82, 0.06);
+}
+
+.streakSettingsCard {
+  background: linear-gradient(135deg, #fff8f5, #fff0e8);
+  border: 1.5px solid rgba(255, 107, 53, 0.22);
+  border-radius: 20px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.08);
+}
+
+.streakSettingsLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.streakSettingsFlame {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.streakSettingsTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #172852;
+}
+
+.streakSettingsSub {
+  font-size: 11px;
+  color: #c43e0a;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.streakSettingsRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.streakSettingsCount {
+  font-size: 38px;
+  font-weight: 900;
+  color: #c43e0a;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.streakSettingsLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e05a1a;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.btnResetStreak {
+  border: 1.5px solid rgba(255, 107, 53, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c43e0a;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnResetStreak:hover {
+  background: #fff;
+}
+
+.btnSaveSettings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #008bc7 0%, #3aabf0 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 11px 24px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 139, 199, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btnSaveSettings:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 139, 199, 0.45);
+}
+
+.settingsSelect {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235A7A94' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 34px;
+  cursor: pointer;
 }
 
 .settingsRow {
@@ -1363,6 +1483,7 @@
   color: #172852;
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .settingsHint {
