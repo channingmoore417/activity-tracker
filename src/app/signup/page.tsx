@@ -1,5 +1,5 @@
-import { AuthForm } from "@/components/auth-form";
+import { BayouAuth } from "@/components/bayou-auth";
 
 export default function SignupPage() {
-  return <AuthForm mode="signup" />;
+  return <BayouAuth />;
 }
