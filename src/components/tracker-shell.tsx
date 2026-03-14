@@ -28,6 +28,7 @@ import { ActivityLogger } from "@/components/activity-logger";
 import { ContactsViewClient } from "@/components/contacts-view-client";
 import { PrintButton } from "@/components/print-button";
 import { StreakPopover } from "@/components/streak-popover";
+import { MobileNav } from "@/components/mobile-nav";
 import { metricCatalog } from "@/lib/tracker-data";
 import type {
   ActivityPageData,
@@ -1221,6 +1222,7 @@ export function TrackerShell(props: TrackerShellProps) {
       <div className={styles.main}>
         <div className={styles.topbar}>
           <div className={styles.topbarLeft}>
+            <MobileNav currentView={props.view} />
             <div className={styles.topbarTitle}>{title}</div>
             <div className={styles.topbarDate}>{format(new Date(), "EEEE, MMMM d")}</div>
           </div>
