@@ -78,27 +78,28 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  border: 1.5px solid #d3e4ef;
+  border: none;
   border-radius: 14px;
-  background: #fff;
+  background: linear-gradient(135deg, #172852 0%, #1e3a6e 50%, #008bc7 100%);
   padding: 20px 12px;
-  color: #172852;
+  color: #fff;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(23, 40, 82, 0.2);
 }
 
 .metricTile:hover {
-  border-color: #008bc7;
-  background: #e8f6fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(23, 40, 82, 0.3);
 }
 
 .metricTileActive {
   composes: metricTile;
-  border-color: #008bc7;
-  background: #e8f6fd;
+  background: linear-gradient(135deg, #008bc7 0%, #3aabf0 100%);
+  box-shadow: 0 4px 20px rgba(0, 139, 199, 0.4);
 }
 
 .metricTileIcon {
@@ -108,12 +109,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: #eef4f9;
-  color: #008bc7;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
 }
 
 .metricTileActive .metricTileIcon {
-  background: #008bc7;
+  background: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
