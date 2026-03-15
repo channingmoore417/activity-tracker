@@ -9,7 +9,7 @@ import styles from "./tracker-shell.module.css";
 
 /* ── Field definitions ─────────────────────────────────────────────── */
 
-type FieldType = "text" | "number" | "boolean" | "enum" | "date-text";
+type FieldType = "text" | "number" | "boolean" | "enum" | "dynamic-enum" | "date-text";
 
 type FieldDef = {
   key: keyof ContactRecord;
@@ -24,13 +24,13 @@ const FIELD_DEFS: FieldDef[] = [
   { key: "contactType", label: "Contact Type", type: "enum", options: CONTACT_TYPES },
   { key: "city", label: "City", type: "text" },
   { key: "state", label: "State", type: "text" },
-  { key: "creditScore", label: "Credit Score", type: "number" },
+  { key: "creditScore", label: "Credit Score", type: "dynamic-enum" },
   { key: "dob", label: "Date of Birth", type: "date-text" },
   { key: "homeAnniversary", label: "Home Anniversary", type: "date-text" },
   { key: "militaryVeteran", label: "Military / Veteran", type: "boolean" },
   { key: "employment", label: "Employment", type: "text" },
   { key: "income", label: "Income", type: "text" },
-  { key: "downPayment", label: "Down Payment", type: "text" },
+  { key: "downPayment", label: "Down Payment", type: "dynamic-enum" },
   { key: "timeline", label: "Timeline", type: "text" },
   { key: "realtorName", label: "Realtor", type: "text" },
   { key: "notes", label: "Notes", type: "text" },
@@ -66,6 +66,12 @@ const OPS_BY_TYPE: Record<FieldType, { value: Operator; label: string }[]> = {
   enum: [
     { value: "is", label: "is" },
     { value: "is_not", label: "is not" },
+  ],
+  "dynamic-enum": [
+    { value: "is", label: "is" },
+    { value: "is_not", label: "is not" },
+    { value: "has_value", label: "has value" },
+    { value: "no_value", label: "is empty" },
   ],
   "date-text": [
     { value: "today", label: "is today" },
@@ -205,7 +211,7 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
   const uniqueValues = useMemo(() => {
     const map: Partial<Record<keyof ContactRecord, string[]>> = {};
     for (const def of FIELD_DEFS) {
-      if (def.type === "text" || def.type === "date-text") {
+      if (def.type === "text" || def.type === "date-text" || def.type === "dynamic-enum") {
         const vals = new Set<string>();
         for (const c of data.contacts) {
           const v = c[def.key];
@@ -428,6 +434,18 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
                       onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
                       style={{ minWidth: 140 }}
                     />
+                  ) : def.type === "dynamic-enum" ? (
+                    <select
+                      className={styles.filterSelect}
+                      value={cond.value}
+                      onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                      style={{ minWidth: 120 }}
+                    >
+                      <option value="">Select…</option>
+                      {(uniqueValues[def.key] ?? []).map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
                   ) : def.type === "enum" && def.options ? (
                     <select
                       className={styles.filterSelect}
