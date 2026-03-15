@@ -216,6 +216,9 @@ export function ContactModal({ contact, onClose }: ContactModalProps) {
             <option>Past Client</option>
             <option>Referral</option>
             <option>Lead</option>
+            <option>Financial Advisor</option>
+            <option>CPA</option>
+            <option>Attorney</option>
           </select>
         </div>
 

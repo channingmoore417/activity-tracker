@@ -431,7 +431,7 @@ export async function saveContact(input: {
 const contactModalSchema = z.object({
   first_name: z.string().trim().min(1, "First name required").max(120),
   last_name: z.string().trim().min(1, "Last name required").max(120),
-  contact_type: z.enum(["Realtor", "Past Client", "Referral", "Lead"]),
+  contact_type: z.enum(["Realtor", "Past Client", "Referral", "Lead", "Financial Advisor", "CPA", "Attorney"]),
   email: z.string().trim().max(200).optional().or(z.literal("")),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),

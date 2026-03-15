@@ -714,7 +714,7 @@ export async function getContactsPageData(filters: {
   const contacts = allContacts ?? [];
 
   // Type counts from ALL contacts (unfiltered)
-  const typeCounts: Record<string, number> = { Realtor: 0, "Past Client": 0, Referral: 0, Lead: 0 };
+  const typeCounts: Record<string, number> = { Realtor: 0, "Past Client": 0, Referral: 0, Lead: 0, "Financial Advisor": 0, CPA: 0, Attorney: 0 };
   for (const c of contacts) {
     if (typeCounts[c.contact_type] !== undefined) {
       typeCounts[c.contact_type]++;

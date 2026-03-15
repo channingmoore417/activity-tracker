@@ -8,12 +8,15 @@ import { ContactModal } from "@/components/contact-modal";
 import type { ContactRecord, ContactsPageData } from "@/lib/db/tracker";
 import styles from "./tracker-shell.module.css";
 
-const CONTACT_TYPES = ["Realtor", "Past Client", "Referral", "Lead"] as const;
+const CONTACT_TYPES = ["Realtor", "Past Client", "Referral", "Lead", "Financial Advisor", "CPA", "Attorney"] as const;
 const CONTACT_COLORS: Record<string, { dot: string; badge: string }> = {
   Realtor: { dot: "#008BC7", badge: "realtor" },
   "Past Client": { dot: "#16a34a", badge: "pastClient" },
   Referral: { dot: "#c2410c", badge: "referral" },
   Lead: { dot: "#6d28d9", badge: "lead" },
+  "Financial Advisor": { dot: "#0891b2", badge: "realtor" },
+  CPA: { dot: "#059669", badge: "pastClient" },
+  Attorney: { dot: "#7c3aed", badge: "lead" },
 };
 
 function getInitials(first: string, last: string) {

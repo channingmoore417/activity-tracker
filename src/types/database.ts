@@ -70,7 +70,7 @@ export type Database = {
           last_name: string;
           email: string;
           phone: string;
-          contact_type: "Realtor" | "Past Client" | "Referral" | "Lead";
+          contact_type: "Realtor" | "Past Client" | "Referral" | "Lead" | "Financial Advisor" | "CPA" | "Attorney";
           notes: string | null;
           activity_count: number;
           dob: string | null;
@@ -95,7 +95,7 @@ export type Database = {
           last_name: string;
           email?: string;
           phone?: string;
-          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead";
+          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead" | "Financial Advisor" | "CPA" | "Attorney";
           notes?: string | null;
           activity_count?: number;
           dob?: string | null;
@@ -120,7 +120,7 @@ export type Database = {
           last_name?: string;
           email?: string;
           phone?: string;
-          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead";
+          contact_type?: "Realtor" | "Past Client" | "Referral" | "Lead" | "Financial Advisor" | "CPA" | "Attorney";
           notes?: string | null;
           activity_count?: number;
           dob?: string | null;
