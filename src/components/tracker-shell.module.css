@@ -169,11 +169,6 @@
   composes: topbarDate;
 }
 
-.mobilePageHeader {
-  display: none;
-  padding: 14px 14px 0;
-}
-
 .topbarRight {
   display: flex;
   align-items: center;
@@ -1008,7 +1003,9 @@
   background: #fff;
   border-radius: 24px;
   overflow: hidden;
+  overflow-x: auto;
   box-shadow: 0 4px 24px rgba(23, 40, 82, 0.07);
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -2686,12 +2683,6 @@
   .topbarTitleDesktop,
   .topbarDateDesktop {
     display: none;
-  }
-
-  .mobilePageHeader {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
   }
 
   .topbarRight {

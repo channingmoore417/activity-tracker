@@ -1243,11 +1243,6 @@ export function TrackerShell(props: TrackerShellProps) {
           </div>
         </div>
 
-        <div className={styles.mobilePageHeader}>
-          <div className={styles.topbarTitle}>{title}</div>
-          <div className={styles.topbarDate}>{format(new Date(), "EEEE, MMMM d")}</div>
-        </div>
-
         <div className={styles.content}>
           <FlashMessage flash={props.flash} />
           {props.view === "dashboard" ? <DashboardView data={props.data} /> : null}
