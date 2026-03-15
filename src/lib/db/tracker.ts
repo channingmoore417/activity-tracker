@@ -796,11 +796,11 @@ export async function getSettingsPageData(): Promise<SettingsPageData> {
 
 export function getFlashMessage(params: Record<string, string | undefined>): TrackerFlash {
   if (params.saved === "activity") {
-    return { status: "success", message: "Activity saved to Supabase." };
+    return { status: "success", message: "Activity saved." };
   }
 
   if (params.saved === "settings") {
-    return { status: "success", message: "Settings saved to Supabase." };
+    return { status: "success", message: "Settings saved." };
   }
 
   if (params.error === "validation") {
