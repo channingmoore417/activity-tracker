@@ -62,40 +62,76 @@ export type Database = {
       contacts: {
         Row: {
           activity_count: number
+          city: string | null
           contact_type: string
           created_at: string
+          credit_score: number | null
+          dob: string | null
+          down_payment: string | null
           email: string | null
+          employment: string | null
           first_name: string
+          home_anniversary: string | null
           id: string
+          income: string | null
           last_name: string
+          military_veteran: boolean | null
           notes: string | null
           phone: string | null
+          realtor_id: string | null
+          realtor_name: string | null
+          state: string | null
+          timeline: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           activity_count?: number
+          city?: string | null
           contact_type: string
           created_at?: string
+          credit_score?: number | null
+          dob?: string | null
+          down_payment?: string | null
           email?: string | null
+          employment?: string | null
           first_name: string
+          home_anniversary?: string | null
           id?: string
+          income?: string | null
           last_name: string
+          military_veteran?: boolean | null
           notes?: string | null
           phone?: string | null
+          realtor_id?: string | null
+          realtor_name?: string | null
+          state?: string | null
+          timeline?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           activity_count?: number
+          city?: string | null
           contact_type?: string
           created_at?: string
+          credit_score?: number | null
+          dob?: string | null
+          down_payment?: string | null
           email?: string | null
+          employment?: string | null
           first_name?: string
+          home_anniversary?: string | null
           id?: string
+          income?: string | null
           last_name?: string
+          military_veteran?: boolean | null
           notes?: string | null
           phone?: string | null
+          realtor_id?: string | null
+          realtor_name?: string | null
+          state?: string | null
+          timeline?: string | null
           updated_at?: string
           user_id?: string
         }

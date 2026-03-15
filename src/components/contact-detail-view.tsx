@@ -23,6 +23,17 @@ const METRIC_ICONS: Record<string, string> = {
   credits: "Credit Pulls",
 };
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.infoRow}>
+      <div>
+        <div className={styles.infoLabel}>{label}</div>
+        <div className={styles.infoValue}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
 export function ContactDetailView({ data }: { data: ContactDetailData }) {
   const { contact, activities } = data;
   const router = useRouter();
@@ -93,43 +104,65 @@ export function ContactDetailView({ data }: { data: ContactDetailData }) {
         <h2 className={styles.sectionTitle}>Details</h2>
         <div className={styles.infoCard}>
           {contact.phone && (
-            <div className={styles.infoRow}>
-              <Phone size={14} className={styles.infoIcon} />
-              <div>
-                <div className={styles.infoLabel}>Phone</div>
-                <div className={styles.infoValue}>{contact.phone}</div>
-              </div>
-            </div>
+            <InfoRow label="Phone" value={contact.phone} />
           )}
           {contact.email && (
+            <InfoRow label="Email" value={contact.email} />
+          )}
+          {contact.dob && (
+            <InfoRow label="Date of Birth" value={contact.dob} />
+          )}
+          {contact.militaryVeteran && (
+            <InfoRow label="Military / Veteran" value="Yes" />
+          )}
+          {(contact.city || contact.state) && (
+            <InfoRow label="Location" value={[contact.city, contact.state].filter(Boolean).join(", ")} />
+          )}
+          {contact.creditScore != null && (
+            <InfoRow label="Credit Score" value={String(contact.creditScore)} />
+          )}
+          {contact.downPayment && (
+            <InfoRow label="Down Payment" value={contact.downPayment} />
+          )}
+          {contact.employment && (
+            <InfoRow label="Employment" value={contact.employment} />
+          )}
+          {contact.income && (
+            <InfoRow label="Income" value={contact.income} />
+          )}
+          {contact.homeAnniversary && (
+            <InfoRow label="Home Anniversary" value={contact.homeAnniversary} />
+          )}
+          {contact.timeline && (
+            <InfoRow label="Timeline" value={contact.timeline} />
+          )}
+          {contact.realtorName && (
             <div className={styles.infoRow}>
-              <Mail size={14} className={styles.infoIcon} />
               <div>
-                <div className={styles.infoLabel}>Email</div>
-                <div className={styles.infoValue}>{contact.email}</div>
+                <div className={styles.infoLabel}>Realtor</div>
+                <div className={styles.infoValue}>
+                  {contact.realtorId ? (
+                    <Link href={`/contacts/${contact.realtorId}`} style={{ color: "#008bc7", textDecoration: "none", fontWeight: 600 }}>
+                      {contact.realtorName}
+                    </Link>
+                  ) : (
+                    contact.realtorName
+                  )}
+                </div>
               </div>
             </div>
           )}
           {contact.notes && (
-            <div className={styles.infoRow}>
-              <div>
-                <div className={styles.infoLabel}>Notes</div>
-                <div className={styles.infoValue}>{contact.notes}</div>
-              </div>
-            </div>
+            <InfoRow label="Notes" value={contact.notes} />
           )}
-          <div className={styles.infoRow}>
-            <div>
-              <div className={styles.infoLabel}>Added</div>
-              <div className={styles.infoValue}>
-                {new Date(contact.createdAt).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </div>
-            </div>
-          </div>
+          <InfoRow
+            label="Added"
+            value={new Date(contact.createdAt).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          />
         </div>
       </div>
 

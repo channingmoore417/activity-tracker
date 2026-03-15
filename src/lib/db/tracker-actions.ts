@@ -435,6 +435,18 @@ const contactModalSchema = z.object({
   email: z.string().trim().max(200).optional().or(z.literal("")),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
+  dob: z.string().trim().max(10).optional().or(z.literal("")),
+  city: z.string().trim().max(120).optional().or(z.literal("")),
+  state: z.string().trim().max(60).optional().or(z.literal("")),
+  home_anniversary: z.string().trim().max(10).optional().or(z.literal("")),
+  credit_score: z.coerce.number().int().min(300).max(850).optional().or(z.literal("")).transform((v) => (v === "" ? undefined : v)),
+  down_payment: z.string().trim().max(60).optional().or(z.literal("")),
+  timeline: z.string().trim().max(120).optional().or(z.literal("")),
+  employment: z.string().trim().max(200).optional().or(z.literal("")),
+  income: z.string().trim().max(60).optional().or(z.literal("")),
+  realtor_name: z.string().trim().max(120).optional().or(z.literal("")),
+  realtor_id: z.string().trim().max(60).optional().or(z.literal("")),
+  military_veteran: z.boolean().optional(),
 });
 
 export async function saveOrUpdateContact(input: {
@@ -445,6 +457,18 @@ export async function saveOrUpdateContact(input: {
   email: string;
   phone: string;
   notes: string;
+  dob?: string;
+  city?: string;
+  state?: string;
+  homeAnniversary?: string;
+  creditScore?: number | string;
+  downPayment?: string;
+  timeline?: string;
+  employment?: string;
+  income?: string;
+  realtorName?: string;
+  realtorId?: string;
+  militaryVeteran?: boolean;
 }): Promise<{ success: boolean; error?: string }> {
   const parsed = contactModalSchema.safeParse({
     first_name: input.firstName,
@@ -453,6 +477,18 @@ export async function saveOrUpdateContact(input: {
     email: input.email,
     phone: input.phone,
     notes: input.notes,
+    dob: input.dob,
+    city: input.city,
+    state: input.state,
+    home_anniversary: input.homeAnniversary,
+    credit_score: input.creditScore,
+    down_payment: input.downPayment,
+    timeline: input.timeline,
+    employment: input.employment,
+    income: input.income,
+    realtor_name: input.realtorName,
+    realtor_id: input.realtorId,
+    military_veteran: input.militaryVeteran,
   });
 
   if (!parsed.success) {
@@ -462,32 +498,39 @@ export async function saveOrUpdateContact(input: {
 
   const { supabase, user } = await getAuthedSupabase();
 
+  const payload = {
+    first_name: parsed.data.first_name,
+    last_name: parsed.data.last_name,
+    contact_type: parsed.data.contact_type,
+    email: parsed.data.email || null,
+    phone: parsed.data.phone || null,
+    notes: parsed.data.notes || null,
+    dob: parsed.data.dob || null,
+    city: parsed.data.city || null,
+    state: parsed.data.state || null,
+    home_anniversary: parsed.data.home_anniversary || null,
+    credit_score: typeof parsed.data.credit_score === "number" ? parsed.data.credit_score : null,
+    down_payment: parsed.data.down_payment || null,
+    timeline: parsed.data.timeline || null,
+    employment: parsed.data.employment || null,
+    income: parsed.data.income || null,
+    realtor_name: parsed.data.realtor_name || null,
+    realtor_id: parsed.data.realtor_id || null,
+    military_veteran: parsed.data.military_veteran ?? null,
+  };
+
   if (input.id) {
-    // Update existing contact
     const { error } = await supabase
       .from("contacts")
-      .update({
-        first_name: parsed.data.first_name,
-        last_name: parsed.data.last_name,
-        contact_type: parsed.data.contact_type,
-        email: parsed.data.email || null,
-        phone: parsed.data.phone || null,
-        notes: parsed.data.notes || null,
-      })
+      .update(payload)
       .eq("id", input.id)
       .eq("user_id", user.id);
 
     if (error) return { success: false, error: "Failed to update contact." };
   } else {
-    // Insert new contact
     const { error } = await supabase.from("contacts").insert({
       user_id: user.id,
-      first_name: parsed.data.first_name,
-      last_name: parsed.data.last_name,
-      contact_type: parsed.data.contact_type,
-      email: parsed.data.email || null,
-      phone: parsed.data.phone || null,
-      notes: parsed.data.notes || null,
+      ...payload,
     });
 
     if (error) return { success: false, error: "Failed to save contact." };
@@ -497,6 +540,24 @@ export async function saveOrUpdateContact(input: {
   revalidatePath("/dashboard");
   revalidatePath("/activity");
   return { success: true };
+}
+
+export async function searchRealtors(query: string): Promise<{ id: string; name: string }[]> {
+  if (!query || query.length < 1) return [];
+  const { supabase, user } = await getAuthedSupabase();
+
+  const { data } = await supabase
+    .from("contacts")
+    .select("id, first_name, last_name")
+    .eq("user_id", user.id)
+    .eq("contact_type", "Realtor")
+    .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+    .limit(8);
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    name: `${r.first_name} ${r.last_name}`.trim(),
+  }));
 }
 
 export async function resetStreak(): Promise<void> {

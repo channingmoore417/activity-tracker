@@ -130,6 +130,18 @@ export type ContactRecord = {
   phone: string | null;
   notes: string | null;
   activityCount: number;
+  dob: string | null;
+  city: string | null;
+  state: string | null;
+  homeAnniversary: string | null;
+  creditScore: number | null;
+  downPayment: string | null;
+  timeline: string | null;
+  employment: string | null;
+  income: string | null;
+  realtorName: string | null;
+  realtorId: string | null;
+  militaryVeteran: boolean | null;
   createdAt: string;
 };
 
@@ -752,6 +764,18 @@ export async function getContactsPageData(filters: {
       phone: c.phone,
       notes: c.notes,
       activityCount: c.activity_count,
+      dob: c.dob ?? null,
+      city: c.city ?? null,
+      state: c.state ?? null,
+      homeAnniversary: c.home_anniversary ?? null,
+      creditScore: c.credit_score ?? null,
+      downPayment: c.down_payment ?? null,
+      timeline: c.timeline ?? null,
+      employment: c.employment ?? null,
+      income: c.income ?? null,
+      realtorName: c.realtor_name ?? null,
+      realtorId: c.realtor_id ?? null,
+      militaryVeteran: c.military_veteran ?? null,
       createdAt: c.created_at,
     })),
     typeCounts,
@@ -806,6 +830,18 @@ export async function getContactDetailData(contactId: string): Promise<ContactDe
       phone: contact.phone,
       notes: contact.notes,
       activityCount: contact.activity_count,
+      dob: contact.dob ?? null,
+      city: contact.city ?? null,
+      state: contact.state ?? null,
+      homeAnniversary: contact.home_anniversary ?? null,
+      creditScore: contact.credit_score ?? null,
+      downPayment: contact.down_payment ?? null,
+      timeline: contact.timeline ?? null,
+      employment: contact.employment ?? null,
+      income: contact.income ?? null,
+      realtorName: contact.realtor_name ?? null,
+      realtorId: contact.realtor_id ?? null,
+      militaryVeteran: contact.military_veteran ?? null,
       createdAt: contact.created_at,
     },
     activities: mapEntries(entries ?? []),
