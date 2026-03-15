@@ -36,12 +36,19 @@ const FIELD_DEFS: FieldDef[] = [
   { key: "notes", label: "Notes", type: "text" },
 ];
 
-type Operator = "is" | "contains" | "eq" | "gte" | "lte" | "is_true" | "is_false" | "has_value" | "no_value" | "today";
+type Operator =
+  | "is" | "is_not" | "contains" | "does_not_contain"
+  | "eq" | "gte" | "lte"
+  | "is_true" | "is_false"
+  | "has_value" | "no_value"
+  | "today" | "tomorrow" | "yesterday" | "in_7_days" | "in_30_days" | "this_month" | "on_date";
 
 const OPS_BY_TYPE: Record<FieldType, { value: Operator; label: string }[]> = {
   text: [
     { value: "contains", label: "contains" },
+    { value: "does_not_contain", label: "does not contain" },
     { value: "is", label: "is exactly" },
+    { value: "is_not", label: "is not" },
     { value: "has_value", label: "has value" },
     { value: "no_value", label: "is empty" },
   ],
@@ -58,11 +65,18 @@ const OPS_BY_TYPE: Record<FieldType, { value: Operator; label: string }[]> = {
   ],
   enum: [
     { value: "is", label: "is" },
+    { value: "is_not", label: "is not" },
   ],
   "date-text": [
+    { value: "today", label: "is today" },
+    { value: "tomorrow", label: "is tomorrow" },
+    { value: "yesterday", label: "was yesterday" },
+    { value: "in_7_days", label: "in next 7 days" },
+    { value: "in_30_days", label: "in next 30 days" },
+    { value: "this_month", label: "this month" },
+    { value: "on_date", label: "is on date" },
     { value: "contains", label: "contains" },
     { value: "is", label: "is exactly" },
-    { value: "today", label: "is today (MM/DD)" },
     { value: "has_value", label: "has value" },
     { value: "no_value", label: "is empty" },
   ],
@@ -82,12 +96,55 @@ function getDefaultOp(type: FieldType): Operator {
 }
 
 function needsValue(op: Operator): boolean {
-  return !["is_true", "is_false", "has_value", "no_value", "today"].includes(op);
+  return ![
+    "is_true", "is_false", "has_value", "no_value",
+    "today", "tomorrow", "yesterday", "in_7_days", "in_30_days", "this_month",
+  ].includes(op);
 }
 
-function getTodayMMDD(): string {
+function getMMDD(date: Date): string {
+  return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function dateOffsetMMDD(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return getMMDD(d);
+}
+
+function getMMDDRange(days: number): string[] {
+  const result: string[] = [];
   const now = new Date();
-  return `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+  for (let i = 0; i <= days; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + i);
+    result.push(getMMDD(d));
+  }
+  return result;
+}
+
+function matchesDateOp(raw: unknown, operator: Operator, filterValue?: string): boolean {
+  if (typeof raw !== "string" || !raw) return false;
+  // Extract MM/DD from the stored value (could be "MM/DD" or "MM/DD/YYYY")
+  const mmdd = raw.length >= 5 ? raw.substring(0, 5) : raw;
+
+  if (operator === "today") return mmdd === getMMDD(new Date());
+  if (operator === "tomorrow") return mmdd === dateOffsetMMDD(1);
+  if (operator === "yesterday") return mmdd === dateOffsetMMDD(-1);
+  if (operator === "in_7_days") return getMMDDRange(7).includes(mmdd);
+  if (operator === "in_30_days") return getMMDDRange(30).includes(mmdd);
+  if (operator === "on_date" && filterValue) {
+    // filterValue is "YYYY-MM-DD" from date picker
+    const [, fm, fd] = filterValue.split("-");
+    if (!fm || !fd) return false;
+    const targetMMDD = `${fm}/${fd}`;
+    return mmdd === targetMMDD;
+  }
+  if (operator === "this_month") {
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+    return mmdd.startsWith(currentMonth + "/");
+  }
+  return false;
 }
 
 function matchesCondition(contact: ContactRecord, cond: FilterCondition): boolean {
@@ -98,9 +155,10 @@ function matchesCondition(contact: ContactRecord, cond: FilterCondition): boolea
   if (operator === "no_value") return raw == null || raw === "";
   if (operator === "is_true") return raw === true;
   if (operator === "is_false") return raw !== true;
-  if (operator === "today") {
-    if (typeof raw !== "string" || !raw) return false;
-    return raw.startsWith(getTodayMMDD());
+
+  // Date-relative operators
+  if (["today", "tomorrow", "yesterday", "in_7_days", "in_30_days", "this_month", "on_date"].includes(operator)) {
+    return matchesDateOp(raw, operator, value);
   }
 
   if (raw == null) return false;
@@ -108,7 +166,9 @@ function matchesCondition(contact: ContactRecord, cond: FilterCondition): boolea
   const target = value.toLowerCase();
 
   if (operator === "contains") return strVal.includes(target);
+  if (operator === "does_not_contain") return !strVal.includes(target);
   if (operator === "is") return strVal === target;
+  if (operator === "is_not") return strVal !== target;
   if (operator === "eq") return Number(raw) === Number(value);
   if (operator === "gte") return Number(raw) >= Number(value);
   if (operator === "lte") return Number(raw) <= Number(value);
@@ -360,7 +420,15 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
 
                 {/* Value input */}
                 {showValue && (
-                  def.type === "enum" && def.options ? (
+                  cond.operator === "on_date" ? (
+                    <input
+                      type="date"
+                      className={styles.filterSelect}
+                      value={cond.value}
+                      onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                      style={{ minWidth: 140 }}
+                    />
+                  ) : def.type === "enum" && def.options ? (
                     <select
                       className={styles.filterSelect}
                       value={cond.value}
