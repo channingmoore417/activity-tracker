@@ -290,6 +290,14 @@
   .fab {
     display: flex;
   }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    margin: 12px;
+  }
 }
 
 /* Full-width submit button inside the modal */
