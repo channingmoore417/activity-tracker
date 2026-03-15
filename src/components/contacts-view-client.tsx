@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, MessageSquare, Phone, Plus, Search, Users } from "lucide-react";
 import { ContactModal } from "@/components/contact-modal";
 import type { ContactRecord, ContactsPageData } from "@/lib/db/tracker";
@@ -21,6 +21,7 @@ function getInitials(first: string, last: string) {
 }
 
 export function ContactsViewClient({ data }: { data: ContactsPageData }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentType = searchParams.get("type") ?? "";
   const currentSearch = searchParams.get("search") ?? "";
@@ -129,11 +130,11 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
               <div
                 key={c.id}
                 className={styles.ctCard}
-                onClick={() => setModalContact(c)}
+                onClick={() => router.push(`/contacts/${c.id}`)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setModalContact(c);
+                  if (e.key === "Enter" || e.key === " ") router.push(`/contacts/${c.id}`);
                 }}
               >
                 <div className={styles.ctCardTop}>

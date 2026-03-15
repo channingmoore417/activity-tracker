@@ -143,6 +143,14 @@ export type ContactsPageData = {
   filters: { search: string; type: string };
 };
 
+export type ContactDetailData = {
+  profile: TrackerProfile;
+  dailyScore: number;
+  streak: StreakData;
+  contact: ContactRecord;
+  activities: TrackerActivityEntry[];
+};
+
 export type SettingsGoal = {
   key: MetricKey;
   label: string;
@@ -752,6 +760,55 @@ export async function getContactsPageData(filters: {
       search: filters.search ?? "",
       type: filters.type ?? "",
     },
+  };
+}
+
+export async function getContactDetailData(contactId: string): Promise<ContactDetailData | null> {
+  const { supabase, userId, profile, goalRows, streak } = await getProfileAndGoals();
+
+  const { data: contact, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contactId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !contact) return null;
+
+  const contactName = `${contact.first_name} ${contact.last_name}`.trim();
+  const { data: entries } = await supabase
+    .from("activity_entries")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("contact_name", contactName)
+    .order("logged_at", { ascending: false })
+    .limit(50);
+
+  const today = format(new Date(), "yyyy-MM-dd");
+  const { data: todayEntries } = await supabase
+    .from("activity_entries")
+    .select("score")
+    .eq("user_id", userId)
+    .eq("activity_date", today);
+
+  const dailyScore = (todayEntries ?? []).reduce((sum, e) => sum + (e.score ?? 0), 0);
+
+  return {
+    profile,
+    dailyScore,
+    streak,
+    contact: {
+      id: contact.id,
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      contactType: contact.contact_type,
+      email: contact.email,
+      phone: contact.phone,
+      notes: contact.notes,
+      activityCount: contact.activity_count,
+      createdAt: contact.created_at,
+    },
+    activities: mapEntries(entries ?? []),
   };
 }
 
