@@ -291,12 +291,15 @@
     display: flex;
   }
 
-  .metricGrid {
-    grid-template-columns: 1fr;
-  }
-
   .modal {
     margin: 12px;
+  }
+}
+
+@media (max-width: 500px) {
+  .metricGrid {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
   }
 }
 
