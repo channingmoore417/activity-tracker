@@ -721,20 +721,8 @@ export async function getContactsPageData(filters: {
     }
   }
 
-  // Apply filters
-  let filtered = contacts;
-  if (filters.type) {
-    filtered = filtered.filter((c) => c.contact_type === filters.type);
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    filtered = filtered.filter(
-      (c) =>
-        `${c.first_name} ${c.last_name}`.toLowerCase().includes(q) ||
-        (c.email ?? "").toLowerCase().includes(q) ||
-        (c.notes ?? "").toLowerCase().includes(q),
-    );
-  }
+  // Filtering is now done client-side for instant responsiveness
+  const filtered = contacts;
 
   // Daily score
   const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
