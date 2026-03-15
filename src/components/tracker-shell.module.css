@@ -153,10 +153,23 @@
   letter-spacing: -0.02em;
 }
 
+.topbarTitleDesktop {
+  composes: topbarTitle;
+}
+
 .topbarDate {
   color: #8696aa;
   font-size: 12px;
   font-weight: 400;
+}
+
+.topbarDateDesktop {
+  composes: topbarDate;
+}
+
+.mobilePageHeader {
+  display: none;
+  padding: 14px 14px 0;
 }
 
 .topbarRight {
@@ -200,8 +213,6 @@
 .streakFlameDim {
   font-size: 15px;
   line-height: 1;
-  filter: grayscale(1);
-  opacity: 0.4;
 }
 
 .scoreBadge {
@@ -607,7 +618,6 @@
 }
 
 .streakCard::after {
-  filter: grayscale(1);
 }
 
 .streakCardLeft {
@@ -624,8 +634,7 @@
   font-size: 32px;
   line-height: 1;
   display: block;
-  filter: grayscale(1);
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 .streakCardBody {
@@ -2670,12 +2679,15 @@
     min-width: 0;
   }
 
-  .topbarTitle {
-    font-size: 16px;
+  .topbarTitleDesktop,
+  .topbarDateDesktop {
+    display: none;
   }
 
-  .topbarDate {
-    font-size: 11px;
+  .mobilePageHeader {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
   }
 
   .topbarRight {

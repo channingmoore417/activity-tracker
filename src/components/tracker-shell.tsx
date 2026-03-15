@@ -1223,15 +1223,13 @@ export function TrackerShell(props: TrackerShellProps) {
         <div className={styles.topbar}>
           <div className={styles.topbarLeft}>
             <MobileNav currentView={props.view} />
-            <div className={styles.topbarTitle}>{title}</div>
-            <div className={styles.topbarDate}>{format(new Date(), "EEEE, MMMM d")}</div>
+            <div className={styles.topbarTitleDesktop}>{title}</div>
+            <div className={styles.topbarDateDesktop}>{format(new Date(), "EEEE, MMMM d")}</div>
           </div>
           <div className={styles.topbarRight}>
             <StreakPopover streak={streak}>
               <div className={streak.currentStreak > 0 ? styles.streakPillActive : styles.streakPill}>
-                <span className={streak.currentStreak > 0 ? styles.streakFlame : styles.streakFlameDim}>
-                  🔥
-                </span>
+                <span className={styles.streakFlame}>🔥</span>
                 <span>
                   {streak.currentStreak} day{streak.currentStreak === 1 ? "" : " "}streak
                 </span>
@@ -1243,6 +1241,11 @@ export function TrackerShell(props: TrackerShellProps) {
             </div>
             <ActivityLogger />
           </div>
+        </div>
+
+        <div className={styles.mobilePageHeader}>
+          <div className={styles.topbarTitle}>{title}</div>
+          <div className={styles.topbarDate}>{format(new Date(), "EEEE, MMMM d")}</div>
         </div>
 
         <div className={styles.content}>
