@@ -4,6 +4,7 @@
   background: #eef4f9;
   color: #172852;
   font-family: var(--font-bayou), sans-serif;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -125,6 +126,7 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -356,6 +358,8 @@
   border-radius: 24px;
   padding: 26px 26px 22px;
   box-shadow: 0 4px 24px rgba(23, 40, 82, 0.07);
+  overflow: hidden;
+  min-width: 0;
 }
 
 .moduleHead {
