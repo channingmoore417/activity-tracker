@@ -68,6 +68,8 @@ const METRIC_GRADIENTS: Record<string, [string, string]> = {
   convs: ["#008BC7", "#3AABF0"],
   leads: ["#0f4c8a", "#1d82c7"],
   credits: ["#0a3060", "#005a9e"],
+  social_posts: ["#5b21b6", "#7c3aed"],
+  social_engagements: ["#9f1239", "#e11d48"],
 };
 
 function Ring({ value, goal, color }: { value: number; goal: number; color: string }) {

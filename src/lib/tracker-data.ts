@@ -2,6 +2,8 @@ import {
   Banknote,
   MessagesSquare,
   Phone,
+  Share2,
+  ThumbsUp,
   UserRoundPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -11,6 +13,8 @@ export const metricKeys = [
   "convs",
   "leads",
   "credits",
+  "social_posts",
+  "social_engagements",
 ] as const;
 
 export type MetricKey = (typeof metricKeys)[number];
@@ -56,6 +60,22 @@ export const metricCatalog: MetricCatalogItem[] = [
     color: "#008BC7",
     defaultDailyGoal: 2,
     defaultWeeklyGoal: 10,
+  },
+  {
+    key: "social_posts",
+    label: "Social Posts",
+    icon: Share2,
+    color: "#7c3aed",
+    defaultDailyGoal: 1,
+    defaultWeeklyGoal: 5,
+  },
+  {
+    key: "social_engagements",
+    label: "Social Engagements",
+    icon: ThumbsUp,
+    color: "#e11d48",
+    defaultDailyGoal: 5,
+    defaultWeeklyGoal: 25,
   },
 ];
 

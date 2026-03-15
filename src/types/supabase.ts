@@ -282,7 +282,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      activity_metric: "calls" | "convs" | "leads" | "credits"
+      activity_metric: "calls" | "convs" | "leads" | "credits" | "social_posts" | "social_engagements"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -410,7 +410,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      activity_metric: ["calls", "convs", "leads", "credits"],
+      activity_metric: ["calls", "convs", "leads", "credits", "social_posts", "social_engagements"],
     },
   },
 } as const

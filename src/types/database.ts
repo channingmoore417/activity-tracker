@@ -17,7 +17,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           contact_name: string;
           activity_type: string;
           count: number;
@@ -34,7 +36,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           contact_name: string;
           activity_type: string;
           count?: number;
@@ -51,7 +55,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           contact_name?: string;
           activity_type?: string;
           count?: number;
@@ -147,7 +153,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           daily_goal: number;
           weekly_goal: number;
           created_at: string;
@@ -160,7 +168,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           daily_goal?: number;
           weekly_goal?: number;
           created_at?: string;
@@ -173,7 +183,9 @@ export type Database = {
             | "calls"
             | "convs"
             | "leads"
-            | "credits";
+            | "credits"
+            | "social_posts"
+            | "social_engagements";
           daily_goal?: number;
           weekly_goal?: number;
           created_at?: string;
@@ -272,6 +284,8 @@ export type Database = {
             | "convs"
             | "leads"
             | "credits"
+            | "social_posts"
+            | "social_engagements"
             | null;
           total_count: number | null;
         };
@@ -285,6 +299,8 @@ export type Database = {
             | "convs"
             | "leads"
             | "credits"
+            | "social_posts"
+            | "social_engagements"
             | null;
           total_count: number | null;
         };

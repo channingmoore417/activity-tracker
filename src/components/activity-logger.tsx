@@ -46,12 +46,18 @@ function needsSubtype(metric: MetricKey) {
 }
 
 function needsContactName(metric: MetricKey) {
-  return metric !== "calls";
+  return metric !== "calls" && metric !== "social_posts" && metric !== "social_engagements";
+}
+
+function isCountOnly(metric: MetricKey) {
+  return metric === "calls" || metric === "social_posts" || metric === "social_engagements";
 }
 
 function getActivityType(metric: MetricKey, subtype: string) {
   if (metric === "calls") return "Call";
   if (metric === "credits") return "Credit Pull";
+  if (metric === "social_posts") return "Social Post";
+  if (metric === "social_engagements") return "Social Engagement";
   return subtype;
 }
 
@@ -118,7 +124,7 @@ export function ActivityLogger() {
       metric,
       contactName: needsContactName(metric) ? contactName : "",
       activityType,
-      count: metric === "calls" ? count : 1,
+      count: isCountOnly(metric) ? count : 1,
     });
 
     setResult(res);
@@ -145,7 +151,7 @@ export function ActivityLogger() {
   }
 
   const canLog =
-    metric === "calls" ||
+    isCountOnly(metric!) ||
     (needsContactName(metric!) && contactName.trim().length > 0);
 
   return (
@@ -231,7 +237,7 @@ export function ActivityLogger() {
               {step === "input" && metric ? (
                 <>
                   <div className={styles.stepLabel}>
-                    {metric === "calls" ? "Step 2 — How Many?" : needsSubtype(metric) ? "Step 3 — Contact Info" : "Step 2 — Contact Info"}
+                    {isCountOnly(metric) ? "Step 2 — How Many?" : needsSubtype(metric) ? "Step 3 — Contact Info" : "Step 2 — Contact Info"}
                   </div>
 
                   {subtype ? (
@@ -240,7 +246,7 @@ export function ActivityLogger() {
                     </div>
                   ) : null}
 
-                  {metric === "calls" ? (
+                  {isCountOnly(metric) ? (
                     <div className={styles.stepper}>
                       <button
                         className={styles.stepperButton}

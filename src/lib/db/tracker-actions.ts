@@ -39,6 +39,8 @@ const SCORE_MAP: Record<string, Record<string, number>> = {
   },
   leads: { _default: 15 },
   credits: { _default: 20 },
+  social_posts: { _default: 5 },
+  social_engagements: { _default: 2 },
 };
 
 function getEntryScore(metric: string, activityType: string): number {
@@ -70,6 +72,8 @@ const contactTypeByMetric: Record<MetricKey, string> = {
   convs: "Realtor",
   credits: "Past Client",
   calls: "Past Client",
+  social_posts: "Lead",
+  social_engagements: "Lead",
 };
 
 const settingsSchema = z.object({
