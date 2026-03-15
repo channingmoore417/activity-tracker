@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Mail, Phone, Plus, Search, Users } from "lucide-react";
+import { Mail, MessageSquare, Phone, Plus, Search, Users } from "lucide-react";
 import { ContactModal } from "@/components/contact-modal";
 import type { ContactRecord, ContactsPageData } from "@/lib/db/tracker";
 import styles from "./tracker-shell.module.css";
@@ -155,6 +155,18 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
                   <div className={styles.ctDetail}>
                     <Phone size={11} />
                     {c.phone}
+                  </div>
+                )}
+                {c.phone && (
+                  <div className={styles.ctActions} onClick={(e) => e.stopPropagation()}>
+                    <a href={`tel:${c.phone}`} className={styles.ctActionBtn} aria-label="Call">
+                      <Phone size={14} />
+                      Call
+                    </a>
+                    <a href={`sms:${c.phone}`} className={styles.ctActionBtn} aria-label="Text">
+                      <MessageSquare size={14} />
+                      Text
+                    </a>
                   </div>
                 )}
                 {c.notes && <div className={styles.ctNotesPreview}>{c.notes}</div>}
