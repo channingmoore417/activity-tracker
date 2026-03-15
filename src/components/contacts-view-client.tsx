@@ -1,14 +1,123 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Filter, Mail, MessageSquare, Phone, Plus, Search, Users, X } from "lucide-react";
 import { ContactModal } from "@/components/contact-modal";
 import type { ContactRecord, ContactsPageData } from "@/lib/db/tracker";
 import styles from "./tracker-shell.module.css";
 
-const CONTACT_TYPES = ["Realtor", "Past Client", "Referral", "Lead", "Financial Advisor", "CPA", "Attorney"] as const;
+/* ── Field definitions ─────────────────────────────────────────────── */
+
+type FieldType = "text" | "number" | "boolean" | "enum" | "date-text";
+
+type FieldDef = {
+  key: keyof ContactRecord;
+  label: string;
+  type: FieldType;
+  options?: string[]; // for enum fields
+};
+
+const CONTACT_TYPES = ["Realtor", "Past Client", "Referral", "Lead", "Financial Advisor", "CPA", "Attorney"];
+
+const FIELD_DEFS: FieldDef[] = [
+  { key: "contactType", label: "Contact Type", type: "enum", options: CONTACT_TYPES },
+  { key: "city", label: "City", type: "text" },
+  { key: "state", label: "State", type: "text" },
+  { key: "creditScore", label: "Credit Score", type: "number" },
+  { key: "dob", label: "Date of Birth", type: "date-text" },
+  { key: "homeAnniversary", label: "Home Anniversary", type: "date-text" },
+  { key: "militaryVeteran", label: "Military / Veteran", type: "boolean" },
+  { key: "employment", label: "Employment", type: "text" },
+  { key: "income", label: "Income", type: "text" },
+  { key: "downPayment", label: "Down Payment", type: "text" },
+  { key: "timeline", label: "Timeline", type: "text" },
+  { key: "realtorName", label: "Realtor", type: "text" },
+  { key: "notes", label: "Notes", type: "text" },
+];
+
+type Operator = "is" | "contains" | "eq" | "gte" | "lte" | "is_true" | "is_false" | "has_value" | "no_value" | "today";
+
+const OPS_BY_TYPE: Record<FieldType, { value: Operator; label: string }[]> = {
+  text: [
+    { value: "contains", label: "contains" },
+    { value: "is", label: "is exactly" },
+    { value: "has_value", label: "has value" },
+    { value: "no_value", label: "is empty" },
+  ],
+  number: [
+    { value: "eq", label: "equals" },
+    { value: "gte", label: "≥" },
+    { value: "lte", label: "≤" },
+    { value: "has_value", label: "has value" },
+    { value: "no_value", label: "is empty" },
+  ],
+  boolean: [
+    { value: "is_true", label: "Yes" },
+    { value: "is_false", label: "No" },
+  ],
+  enum: [
+    { value: "is", label: "is" },
+  ],
+  "date-text": [
+    { value: "contains", label: "contains" },
+    { value: "is", label: "is exactly" },
+    { value: "today", label: "is today (MM/DD)" },
+    { value: "has_value", label: "has value" },
+    { value: "no_value", label: "is empty" },
+  ],
+};
+
+type FilterCondition = {
+  id: number;
+  fieldKey: keyof ContactRecord;
+  operator: Operator;
+  value: string;
+};
+
+let nextFilterId = 1;
+
+function getDefaultOp(type: FieldType): Operator {
+  return OPS_BY_TYPE[type][0].value;
+}
+
+function needsValue(op: Operator): boolean {
+  return !["is_true", "is_false", "has_value", "no_value", "today"].includes(op);
+}
+
+function getTodayMMDD(): string {
+  const now = new Date();
+  return `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function matchesCondition(contact: ContactRecord, cond: FilterCondition): boolean {
+  const raw = contact[cond.fieldKey];
+  const { operator, value } = cond;
+
+  if (operator === "has_value") return raw != null && raw !== "" && raw !== false;
+  if (operator === "no_value") return raw == null || raw === "";
+  if (operator === "is_true") return raw === true;
+  if (operator === "is_false") return raw !== true;
+  if (operator === "today") {
+    if (typeof raw !== "string" || !raw) return false;
+    return raw.startsWith(getTodayMMDD());
+  }
+
+  if (raw == null) return false;
+  const strVal = String(raw).toLowerCase();
+  const target = value.toLowerCase();
+
+  if (operator === "contains") return strVal.includes(target);
+  if (operator === "is") return strVal === target;
+  if (operator === "eq") return Number(raw) === Number(value);
+  if (operator === "gte") return Number(raw) >= Number(value);
+  if (operator === "lte") return Number(raw) <= Number(value);
+
+  return true;
+}
+
+/* ── Badge colors ──────────────────────────────────────────────────── */
+
 const CONTACT_COLORS: Record<string, { dot: string; badge: string }> = {
   Realtor: { dot: "#008BC7", badge: "realtor" },
   "Past Client": { dot: "#16a34a", badge: "pastClient" },
@@ -23,41 +132,32 @@ function getInitials(first: string, last: string) {
   return ((first?.[0] ?? "") + (last?.[0] ?? "")).toUpperCase() || "??";
 }
 
+/* ── Main component ────────────────────────────────────────────────── */
+
 export function ContactsViewClient({ data }: { data: ContactsPageData }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialType = searchParams.get("type") ?? "";
-  const initialSearch = searchParams.get("search") ?? "";
-
   const [modalContact, setModalContact] = useState<ContactRecord | null | "new">(null);
-
-  // Client-side filter state
-  const [searchText, setSearchText] = useState(initialSearch);
-  const [typeFilter, setTypeFilter] = useState(initialType);
-  const [stateFilter, setStateFilter] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [militaryFilter, setMilitaryFilter] = useState(false);
-  const [hasCreditScore, setHasCreditScore] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Derive unique values for filter dropdowns
-  const uniqueStates = useMemo(() => {
-    const states = new Set<string>();
-    for (const c of data.contacts) {
-      if (c.state) states.add(c.state);
+  // Unique values for autocomplete (derived from data)
+  const uniqueValues = useMemo(() => {
+    const map: Partial<Record<keyof ContactRecord, string[]>> = {};
+    for (const def of FIELD_DEFS) {
+      if (def.type === "text" || def.type === "date-text") {
+        const vals = new Set<string>();
+        for (const c of data.contacts) {
+          const v = c[def.key];
+          if (typeof v === "string" && v) vals.add(v);
+        }
+        if (vals.size > 0) map[def.key] = [...vals].sort();
+      }
     }
-    return [...states].sort();
+    return map;
   }, [data.contacts]);
 
-  const uniqueCities = useMemo(() => {
-    const cities = new Set<string>();
-    for (const c of data.contacts) {
-      if (c.city) cities.add(c.city);
-    }
-    return [...cities].sort();
-  }, [data.contacts]);
-
-  // Client-side filtering
+  // Apply search + filter conditions
   const filtered = useMemo(() => {
     let result = data.contacts;
 
@@ -70,38 +170,40 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
           (c.phone ?? "").toLowerCase().includes(q) ||
           (c.notes ?? "").toLowerCase().includes(q) ||
           (c.city ?? "").toLowerCase().includes(q) ||
+          (c.state ?? "").toLowerCase().includes(q) ||
           (c.employment ?? "").toLowerCase().includes(q) ||
           (c.realtorName ?? "").toLowerCase().includes(q),
       );
     }
 
-    if (typeFilter) {
-      result = result.filter((c) => c.contactType === typeFilter);
-    }
-    if (stateFilter) {
-      result = result.filter((c) => c.state === stateFilter);
-    }
-    if (cityFilter) {
-      result = result.filter((c) => c.city === cityFilter);
-    }
-    if (militaryFilter) {
-      result = result.filter((c) => c.militaryVeteran === true);
-    }
-    if (hasCreditScore) {
-      result = result.filter((c) => c.creditScore != null);
+    for (const cond of filters) {
+      result = result.filter((c) => matchesCondition(c, cond));
     }
 
     return result;
-  }, [data.contacts, searchText, typeFilter, stateFilter, cityFilter, militaryFilter, hasCreditScore]);
+  }, [data.contacts, searchText, filters]);
 
-  const activeFilterCount = [typeFilter, stateFilter, cityFilter, militaryFilter, hasCreditScore].filter(Boolean).length;
+  const addFilter = () => {
+    const def = FIELD_DEFS[0];
+    setFilters((prev) => [
+      ...prev,
+      { id: nextFilterId++, fieldKey: def.key, operator: getDefaultOp(def.type), value: "" },
+    ]);
+    setShowFilters(true);
+  };
+
+  const updateFilter = (id: number, updates: Partial<FilterCondition>) => {
+    setFilters((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    );
+  };
+
+  const removeFilter = (id: number) => {
+    setFilters((prev) => prev.filter((f) => f.id !== id));
+  };
 
   const clearAllFilters = () => {
-    setTypeFilter("");
-    setStateFilter("");
-    setCityFilter("");
-    setMilitaryFilter(false);
-    setHasCreditScore(false);
+    setFilters([]);
   };
 
   const badgeClass = (type: string) => {
@@ -167,150 +269,175 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
 
         <button
           type="button"
-          onClick={() => setShowFilters(!showFilters)}
+          onClick={() => { setShowFilters(!showFilters); if (!showFilters && filters.length === 0) addFilter(); }}
           style={{
             display: "flex",
             alignItems: "center",
             gap: 6,
             padding: "9px 14px",
             border: "1.5px solid",
-            borderColor: activeFilterCount > 0 ? "#008bc7" : "#d3e4ef",
+            borderColor: filters.length > 0 ? "#008bc7" : "#d3e4ef",
             borderRadius: 10,
-            background: activeFilterCount > 0 ? "#e8f6fd" : "#fff",
+            background: filters.length > 0 ? "#e8f6fd" : "#fff",
             color: "#172852",
             fontSize: 13,
             fontWeight: 600,
             cursor: "pointer",
             fontFamily: "inherit",
-            transition: "border-color 0.15s",
           }}
         >
           <Filter size={14} />
           Filters
-          {activeFilterCount > 0 && (
+          {filters.length > 0 && (
             <span style={{
               background: "#008bc7", color: "#fff", borderRadius: 50,
               padding: "1px 7px", fontSize: 11, fontWeight: 700,
             }}>
-              {activeFilterCount}
+              {filters.length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Expandable filter panel */}
+      {/* Filter builder panel */}
       {showFilters && (
         <div style={{
-          display: "flex",
-          gap: 8,
-          flexWrap: "wrap",
-          alignItems: "center",
-          padding: "12px 16px",
+          padding: "14px 16px",
           background: "#fff",
           borderRadius: 14,
           border: "1.5px solid #e4eaf3",
           marginBottom: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
         }}>
-          {/* Type */}
-          <select
-            className={styles.filterSelect}
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="">All Types</option>
-            {CONTACT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t} ({data.typeCounts[t] ?? 0})
-              </option>
-            ))}
-          </select>
+          {filters.map((cond) => {
+            const def = FIELD_DEFS.find((d) => d.key === cond.fieldKey) ?? FIELD_DEFS[0];
+            const ops = OPS_BY_TYPE[def.type];
+            const showValue = needsValue(cond.operator);
+            const suggestions = (def.type === "text" || def.type === "date-text")
+              ? uniqueValues[def.key] ?? []
+              : [];
 
-          {/* State */}
-          {uniqueStates.length > 0 && (
-            <select
-              className={styles.filterSelect}
-              value={stateFilter}
-              onChange={(e) => setStateFilter(e.target.value)}
-            >
-              <option value="">All States</option>
-              {uniqueStates.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          )}
+            return (
+              <div key={cond.id} style={{
+                display: "flex",
+                gap: 6,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}>
+                {/* Field picker */}
+                <select
+                  className={styles.filterSelect}
+                  value={cond.fieldKey}
+                  onChange={(e) => {
+                    const newKey = e.target.value as keyof ContactRecord;
+                    const newDef = FIELD_DEFS.find((d) => d.key === newKey) ?? FIELD_DEFS[0];
+                    updateFilter(cond.id, {
+                      fieldKey: newKey,
+                      operator: getDefaultOp(newDef.type),
+                      value: "",
+                    });
+                  }}
+                  style={{ minWidth: 130 }}
+                >
+                  {FIELD_DEFS.map((d) => (
+                    <option key={d.key} value={d.key}>{d.label}</option>
+                  ))}
+                </select>
 
-          {/* City */}
-          {uniqueCities.length > 0 && (
-            <select
-              className={styles.filterSelect}
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-            >
-              <option value="">All Cities</option>
-              {uniqueCities.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          )}
+                {/* Operator picker */}
+                <select
+                  className={styles.filterSelect}
+                  value={cond.operator}
+                  onChange={(e) => updateFilter(cond.id, { operator: e.target.value as Operator })}
+                  style={{ minWidth: 90 }}
+                >
+                  {ops.map((op) => (
+                    <option key={op.value} value={op.value}>{op.label}</option>
+                  ))}
+                </select>
 
-          {/* Military toggle */}
-          <button
-            type="button"
-            onClick={() => setMilitaryFilter(!militaryFilter)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "8px 14px",
-              border: "1.5px solid",
-              borderColor: militaryFilter ? "#008bc7" : "#d3e4ef",
-              borderRadius: 10,
-              background: militaryFilter ? "#e8f6fd" : "#fff",
-              color: "#172852",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            Military/Vet
-          </button>
+                {/* Value input */}
+                {showValue && (
+                  def.type === "enum" && def.options ? (
+                    <select
+                      className={styles.filterSelect}
+                      value={cond.value}
+                      onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                      style={{ minWidth: 120 }}
+                    >
+                      <option value="">Select…</option>
+                      {def.options.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  ) : def.type === "number" ? (
+                    <input
+                      type="number"
+                      className={styles.filterSelect}
+                      placeholder="Value"
+                      value={cond.value}
+                      onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                      style={{ minWidth: 80, width: 100 }}
+                    />
+                  ) : suggestions.length > 0 ? (
+                    <>
+                      <input
+                        type="text"
+                        className={styles.filterSelect}
+                        list={`dl-${cond.id}`}
+                        placeholder="Value"
+                        value={cond.value}
+                        onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                        style={{ minWidth: 120 }}
+                      />
+                      <datalist id={`dl-${cond.id}`}>
+                        {suggestions.map((s) => (
+                          <option key={s} value={s} />
+                        ))}
+                      </datalist>
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      className={styles.filterSelect}
+                      placeholder="Value"
+                      value={cond.value}
+                      onChange={(e) => updateFilter(cond.id, { value: e.target.value })}
+                      style={{ minWidth: 120 }}
+                    />
+                  )
+                )}
 
-          {/* Has Credit Score */}
-          <button
-            type="button"
-            onClick={() => setHasCreditScore(!hasCreditScore)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "8px 14px",
-              border: "1.5px solid",
-              borderColor: hasCreditScore ? "#008bc7" : "#d3e4ef",
-              borderRadius: 10,
-              background: hasCreditScore ? "#e8f6fd" : "#fff",
-              color: "#172852",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            Has Credit Score
-          </button>
+                {/* Remove button */}
+                <button
+                  type="button"
+                  onClick={() => removeFilter(cond.id)}
+                  style={{
+                    border: "none", background: "transparent", color: "#8696aa",
+                    cursor: "pointer", padding: 4, display: "flex",
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            );
+          })}
 
-          {/* Clear all */}
-          {activeFilterCount > 0 && (
+          {/* Add + Clear row */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
             <button
               type="button"
-              onClick={clearAllFilters}
+              onClick={addFilter}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
-                padding: "8px 12px",
-                border: "none",
-                background: "transparent",
+                padding: "6px 12px",
+                border: "1.5px solid #d3e4ef",
+                borderRadius: 8,
+                background: "#fff",
                 color: "#008bc7",
                 fontSize: 12,
                 fontWeight: 700,
@@ -318,36 +445,44 @@ export function ContactsViewClient({ data }: { data: ContactsPageData }) {
                 fontFamily: "inherit",
               }}
             >
-              <X size={12} />
-              Clear All
+              <Plus size={12} />
+              Add Filter
             </button>
-          )}
+            {filters.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                style={{
+                  border: "none", background: "transparent", color: "#8696aa",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Active filter chips (shown even when panel is closed) */}
-      {!showFilters && activeFilterCount > 0 && (
+      {/* Active filter chips (shown when panel is closed) */}
+      {!showFilters && filters.length > 0 && (
         <div style={{
           display: "flex",
           gap: 6,
           flexWrap: "wrap",
+          alignItems: "center",
           marginBottom: 12,
         }}>
-          {typeFilter && (
-            <FilterChip label={typeFilter} onRemove={() => setTypeFilter("")} />
-          )}
-          {stateFilter && (
-            <FilterChip label={stateFilter} onRemove={() => setStateFilter("")} />
-          )}
-          {cityFilter && (
-            <FilterChip label={cityFilter} onRemove={() => setCityFilter("")} />
-          )}
-          {militaryFilter && (
-            <FilterChip label="Military/Vet" onRemove={() => setMilitaryFilter(false)} />
-          )}
-          {hasCreditScore && (
-            <FilterChip label="Has Credit Score" onRemove={() => setHasCreditScore(false)} />
-          )}
+          {filters.map((cond) => {
+            const def = FIELD_DEFS.find((d) => d.key === cond.fieldKey);
+            const opLabel = OPS_BY_TYPE[def?.type ?? "text"].find((o) => o.value === cond.operator)?.label ?? cond.operator;
+            const display = needsValue(cond.operator)
+              ? `${def?.label ?? cond.fieldKey} ${opLabel} "${cond.value}"`
+              : `${def?.label ?? cond.fieldKey} ${opLabel}`;
+            return (
+              <FilterChip key={cond.id} label={display} onRemove={() => removeFilter(cond.id)} />
+            );
+          })}
           <button
             type="button"
             onClick={clearAllFilters}
